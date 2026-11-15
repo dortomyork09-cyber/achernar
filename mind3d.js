@@ -1,4 +1,4 @@
-/* MINDSPACE — 나의 작은 우주: 마인드맵이 행성계가 되어 움직여요 (three.js) */
+/* Achernar — 나의 작은 우주: 마인드맵이 행성계가 되어 움직여요 (three.js) */
 const Mind3D=(()=>{
 const SAT={w:'#8B8EF0',y:'#F5C842',o:'#FF9F5A',p:'#FF7FA8',m:'#4FD39A',s:'#5AAEFF',l:'#A98BFF'};
 const PAL=['#5AAEFF','#FF7FA8','#4FD39A','#FF9F5A','#A98BFF','#F5C842','#46C8D8','#FF6F6F'];

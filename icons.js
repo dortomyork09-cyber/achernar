@@ -1,4 +1,4 @@
-/* MINDSPACE 전용 아이콘 — 둥근 선 + 은은한 채움 (직접 그린 세트) */
+/* Achernar 전용 아이콘 — 둥근 선 + 은은한 채움 (직접 그린 세트) */
 const F='style="fill:currentColor;stroke:none;opacity:.18"',D='style="fill:currentColor;stroke:none"';
 const IC2={
  select:`<path ${F} d="M6 3.5l12.5 7.2-5.3 1.5-2.9 5.6z"/><path d="M6 3.5l12.5 7.2-5.3 1.5-2.9 5.6z"/><path d="M13.2 12.2l4.3 5.3"/>`,

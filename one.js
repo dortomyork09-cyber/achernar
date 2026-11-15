@@ -1,8 +1,8 @@
-/* MINDSPACE — 캔버스 하나에서 모든 것 + 저장 화면 */
+/* Achernar — 캔버스 하나에서 모든 것 + 저장 화면 */
 const One={
  on:()=>S.settings.one!==0,
  main(){let p=P(S.main);if(!p||p.trash||p.type!=='canvas'){p=live().filter(x=>x.type==='canvas'&&!x.wall&&!x.mediaLib).sort((a,b)=>b.updated-a.updated)[0];if(!p)p=newPage('canvas',{title:'내 캔버스',cv:Canvas.make('blank')});S.main=p.id;save()}return p},
- init(){if($('#obar'))return;document.body.insertAdjacentHTML('beforeend',`<div id="obar"><span class="msmark"><i></i><i></i><i></i></span><span id="otitle" contenteditable="plaintext-only" spellcheck="false" data-ph="내 캔버스"></span><span class="ost" id="ost">저장됨</span><span class="sp"></span>
+ init(){if($('#obar'))return;document.body.insertAdjacentHTML('beforeend',`<div id="obar"><span class="msmark" title="Achernar"><i></i><i></i><i></i></span><b class="msname">Achernar</b><span id="otitle" contenteditable="plaintext-only" spellcheck="false" data-ph="내 캔버스"></span><span class="ost" id="ost">저장됨</span><span class="sp"></span>
    <button class="oback" id="oback" hidden>${ic('back')}캔버스로</button><button class="onew" id="onew" title="새 캔버스 (Ctrl+Alt+N)">${ic('plus')}<span>새 캔버스</span></button><button class="osave" id="osave" title="저장 (Ctrl+S)">${ic('save')}<span>저장</span></button><button class="omore" id="omore" aria-label="더 보기">${ic('more')}</button></div>`);
   const t=$('#otitle');t.oninput=()=>{const p=One.main();p.title=t.textContent.trim();touch(p)};t.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();t.blur()}};
   $('#osave').onclick=()=>SaveBoard.open();$('#onew').onclick=()=>One.newCanvas();addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.altKey&&e.key.toLowerCase()==='n'&&One.on()){e.preventDefault();One.newCanvas()}});$('#oback').onclick=()=>go('page:'+One.main().id);
@@ -43,7 +43,7 @@ const One={
       if(e.target.closest('[data-sren]')){const n=await ask('이름 바꾸기',{val:x.name});if(n){x.name=n;await One.put(ls)}return One.screen()}
       if(e.target.closest('[data-sload]')||e.target.closest('.osth')){if(!await confirmDlg('이 저장을 불러올까요?',`지금 캔버스는 ‘불러오기 전 자동 저장’으로 먼저 보관해 둘게요.`,'불러오기'))return One.screen();
         await One.snap('불러오기 전 자동 저장');const mm=One.main();mm.cv=JSON.parse(JSON.stringify(x.cv));touch(mm);flush();closeModal();render();setTimeout(()=>Canvas.cmd('fit'),200);toast(`‘${x.name}’을(를) 불러왔어요`)}}}})},
- help(){const g=live().find(p=>p.title==='MINDSPACE 기능 가이드');if(g)return go('page:'+g.id);toast('가이드를 찾을 수 없어요')},
+ help(){const g=live().find(p=>p.title==='Achernar 기능 가이드');if(g)return go('page:'+g.id);toast('가이드를 찾을 수 없어요')},
  /* 변신 결과를 같은 캔버스에 */
  morphHere(k,items,its){const ap=Canvas.api;ap.push();const bx=its.map(i=>ap.box(i.id)).filter(Boolean);const x0=Math.max(...bx.map(b=>b.x+b.w))+120,y0=Math.min(...bx.map(b=>b.y));let made=[];
   if(k==='mind'){const r=ap.mk('node',x0,y0+items.length*34,{w:200,text:'<b>중심 생각</b>',c:'y',shape:'pill'});made.push(r);items.forEach((t,i)=>{const n=ap.mk('node',x0+300,y0+i*72,{w:220,text:esc(t),c:['p','m','s','l','o'][i%5],shape:'pill'});ap.link(r.id,n.id);made.push(n)})}

@@ -1,4 +1,4 @@
-/* MINDSPACE — 더 다양한 기능 (캔버스 하나 안에서) */
+/* Achernar — 더 다양한 기능 (캔버스 하나 안에서) */
 const Feat=(()=>{
 const ap=()=>Canvas.api;const txt=i=>{const d=document.createElement('div');d.innerHTML=i.text||i.title||i.cap||i.name||(i.checks||[]).map(c=>c.t).join(' ')||(i.rows||[]).flat().join(' ')||'';return d.textContent.trim()};
 const at=(pt,fn)=>{One.home();setTimeout(()=>{const a=ap();a.push();const r=fn(a,pt||a.center());a.render();a.save();if(r?.id)a.setSel([r.id])},120)};

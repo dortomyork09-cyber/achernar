@@ -1,4 +1,4 @@
-/* MINDSPACE — 창작 확장: 변신 · 만약에 · 믹서 · 타임캡슐 · 분위기 · 스토리 지도 · 색상 연구실 · 기억 타임라인 · 영감의 벽 · 낙서→다이어그램 · 도구 카드 */
+/* Achernar — 창작 확장: 변신 · 만약에 · 믹서 · 타임캡슐 · 분위기 · 스토리 지도 · 색상 연구실 · 기억 타임라인 · 영감의 벽 · 낙서→다이어그램 · 도구 카드 */
 const MS2=(()=>{
 const A=()=>Canvas.api;
 const txt=it=>strip(it.text||it.title||it.cap||it.name||(it.checks||[]).map(c=>c.t).join(' ')||(it.rows||[]).flat().join(' ')||'').trim();
@@ -124,7 +124,7 @@ function vMemory(){const m=$('#main');const days={};const add=(d,o)=>{(days[d]??
 
 /* ---------- 도구 카드 (공유) ---------- */
 function exportTool(p){const d={mindspaceTool:1,title:pTitle(p),icon:p.icon||'',props:p.db.props,views:p.db.views.map(v=>({...v,filters:[]})),made:today()};saveFile(pTitle(p)+'.mindtool.json',new Blob([JSON.stringify(d,null,1)],{type:'application/json'}));toast('도구 카드를 저장했어요 · 친구에게 파일을 보내면 칸 구성 그대로 쓸 수 있어요')}
-async function importTool(){const[f]=await pickFile('.json,application/json');if(!f)return;let d;try{d=JSON.parse(await f.text())}catch(e){return toast('도구 카드 파일이 아니에요')}if(!d.mindspaceTool||!Array.isArray(d.props))return toast('MINDSPACE 도구 카드가 아니에요');
+async function importTool(){const[f]=await pickFile('.json,application/json');if(!f)return;let d;try{d=JSON.parse(await f.text())}catch(e){return toast('도구 카드 파일이 아니에요')}if(!d.mindspaceTool||!Array.isArray(d.props))return toast('Achernar 도구 카드가 아니에요');
   const db={props:d.props,rows:[],views:d.views?.length?d.views:[{id:uid(),name:'표',type:'table',filters:[],fmode:'and',sort:[],hidden:[],widths:{}}]};db.vid=db.views[0].id;const p=create('db',{title:d.title||'가져온 도구',icon:d.icon||'🧰',db});p.db.props.forEach(x=>{if(x.type==='relation')x.target=p.id});save();toast('도구 카드를 가져왔어요')}
 
 /* ---------- 시작 ---------- */

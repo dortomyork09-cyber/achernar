@@ -454,7 +454,7 @@ function applySettings(){const s=S.settings,r=document.documentElement;s.theme='
   r.style.setProperty('--docw',{narrow:'680px',normal:'760px',wide:'960px',full:'100%'}[s.width]||'760px');r.style.setProperty('--sideW',s.sideW+'px');r.style.setProperty('--panelW',s.panelW+'px');
   document.body.classList.toggle('noanim',!s.anim);document.body.classList.toggle('noside',!s.side);document.body.classList.toggle('panel',!!s.panel);document.body.classList.toggle('noai',!s.mods?.ai);document.body.classList.toggle('railc',!!s.railc);document.body.classList.toggle('simple',s.simple!==0);document.body.classList.toggle('one',s.one!==0);document.documentElement.lang=s.lang==='en'?'en':'ko';document.body.classList.toggle('nograph',!s.mods?.graph)}
 function toggleSide(v){S.settings.side=v??!S.settings.side;document.body.classList.toggle('drawer',innerWidth<=860&&S.settings.side);applySettings();save()}
-function toggleTheme(){S.settings.theme='light';applySettings();toast('MINDSPACE는 밝은 화면으로 고정돼 있어요')}
+function toggleTheme(){S.settings.theme='light';applySettings();toast('Achernar는 밝은 화면으로 고정돼 있어요')}
 function openSettings(tab='general'){const s=S.settings;const tabs=[['general','일반'],['side','사이드바'],['layout','레이아웃'],['status','작업 상태'],['ai','AI'],['mods','기능 켜기'],['data','데이터'],['keys','단축키']];
   const seg=(k,opts)=>`<div class="seg" data-set="${k}">${opts.map(([v,n])=>`<button data-v="${v}" class="${String(s[k])===String(v)?'on':''}">${n}</button>`).join('')}</div>`;let h='';
   if(tab==='general')h=`<div class="setg"><label>강조 색</label><div class="sws">${['#2563EB','#3B5BDB','#2B8A3E','#C92A2A','#D9480F','#212529'].map(c=>`<button data-acc="${c}" class="${s.accent===c?'on':''}" style="--v:${c}" aria-label="${c}"></button>`).join('')}<input type="color" id="accIn" value="${s.accent}" aria-label="직접 고르기"></div>
@@ -521,7 +521,7 @@ function bindGlobal(){
   document.addEventListener('visibilitychange',()=>{if(document.hidden)flush()});
   addEventListener('online',()=>toast('다시 온라인이에요. 데이터는 이 기기에 안전하게 저장돼 있어요'));addEventListener('offline',()=>toast('오프라인이에요. 계속 쓰셔도 이 기기에 저장돼요'));
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{if(route==='graph')render()})}
-function seedGuide2(){const g=newPage('doc',{title:'MINDSPACE 기능 가이드',icon:'🧭',tags:['가이드'],blocks:T(`callout:🧭|MINDSPACE는 생각을 글·그림·카드·지도로 자유롭게 펼치는 창작 공간이에요. 이 가이드는 언제든 지워도 되고, 왼쪽 ‘노트’에서 다시 찾을 수 있어요.
+function seedGuide2(){const g=newPage('doc',{title:'Achernar 기능 가이드',icon:'🧭',tags:['가이드'],blocks:T(`callout:🧭|Achernar는 생각을 글·그림·카드·지도로 자유롭게 펼치는 창작 공간이에요. 이 가이드는 언제든 지워도 되고, 왼쪽 ‘노트’에서 다시 찾을 수 있어요.
 h2:처음 30초
 todo:왼쪽 **캔버스** 를 열고 빈 곳을 **더블클릭** 해 글을 써 보세요
 todo:사진이나 파일을 캔버스로 **끌어다 놓아** 보세요
@@ -562,7 +562,7 @@ ul:**비주얼** 무드보드 · **마인드맵** 중심 생각에서 가지 뻗
 ul:**미디어** 모든 사진·영상·소리·파일 모음 · **라이브러리** 모든 작업 · **즐겨찾기**
 ul:**설정** — 언어(한국어/English), 시작 화면, 테마, 강조 색, 단축키, 백업
 h2:🖥 데스크톱 앱
-p:MINDSPACE를 Windows 프로그램(.exe)으로 만드는 Tauri 프로젝트가 따로 있어요. 프로젝트 안의 README 순서대로 하면 돼요.`)});return g}
+p:Achernar를 Windows 프로그램(.exe)으로 만드는 Tauri 프로젝트가 따로 있어요. 프로젝트 안의 README 순서대로 하면 돼요.`)});return g}
 
 function seedGuide(){const g=newPage('doc',{title:'사용 가이드',icon:'📘',blocks:T(`callout:👋|처음 오셨네요. 이 문서는 사용법만 담은 가이드예요. 다 읽었으면 지워도 돼요.
 h2:1. 만들기

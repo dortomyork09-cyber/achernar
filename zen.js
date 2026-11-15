@@ -1,7 +1,7 @@
-/* MINDSPACE 간단 화면 — 버튼 하나로 모든 것 */
+/* Achernar 간단 화면 — 버튼 하나로 모든 것 */
 const Zen={
  init(){if($('#zbar'))return;document.body.insertAdjacentHTML('beforeend',`<div id="zbar"><button id="zmenu" aria-label="메뉴">${ic('menu')}</button><span id="ztitle" contenteditable="plaintext-only" spellcheck="false"></span></div>
-  <div id="zpanel" hidden><div class="zp"><div class="zph"><span class="msmark"><i></i><i></i><i></i></span><b>MINDSPACE</b><button class="ib sm" id="zclose" aria-label="닫기">${ic('x')}</button></div>
+  <div id="zpanel" hidden><div class="zp"><div class="zph"><span class="msmark"><i></i><i></i><i></i></span><b>Achernar</b><button class="ib sm" id="zclose" aria-label="닫기">${ic('x')}</button></div>
   <div class="znew"><button data-zn="canvas">${ic('canvas')}<b>새 캔버스</b></button><button data-zn="doc">${ic('page')}<b>새 노트</b></button><button data-zn="more">${ic('plus')}<b>다른 종류</b></button></div>
   <input class="inp zq" id="zq" placeholder="찾기…" autocomplete="off"><div class="zlist" id="zlist"></div>
   <div class="zfoot"><button data-zf="full">${ic('layout')}모든 도구 보기</button><button data-zf="settings">${ic('settings')}설정</button></div></div></div>`);

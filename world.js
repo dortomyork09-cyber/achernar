@@ -1,4 +1,4 @@
-/* MINDSPACE — WORLD MODE: 같은 캔버스 데이터를 세계처럼 보여 주고 탐험하기 */
+/* Achernar — WORLD MODE: 같은 캔버스 데이터를 세계처럼 보여 주고 탐험하기 */
 const World=(()=>{
 const ap=()=>Canvas.api,C=()=>ap()?.C();
 const en=()=>S.settings.lang==='en',T=(k,e)=>en()?e:k;

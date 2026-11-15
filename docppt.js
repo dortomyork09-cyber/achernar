@@ -1,4 +1,4 @@
-/* MINDSPACE — 캔버스 안의 문서 · 슬라이드(PPT) · 서식 도구 */
+/* Achernar — 캔버스 안의 문서 · 슬라이드(PPT) · 서식 도구 */
 const DocPPT=(()=>{
 const ap=()=>Canvas.api;const SW=960,SH=540;
 const COLS=['#202124','#5F6368','#D93025','#E8710A','#F9AB00','#188038','#1A73E8','#2563EB','#A142F4','#E52592'];

@@ -1,7 +1,7 @@
 {
-  "name": "MINDSPACE",
-  "short_name": "MINDSPACE",
-  "description": "캔버스 하나에서 메모·마인드맵·문서·발표까지",
+  "name": "Achernar — 아케르나르",
+  "short_name": "Achernar",
+  "description": "생각이 흘러가 닿는 곳 — 캔버스 하나에서 메모·마인드맵·문서·발표까지",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",
@@ -9,9 +9,27 @@
   "background_color": "#FAFAFA",
   "theme_color": "#FAFAFA",
   "icons": [
-    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
-    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
-    {"src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
-    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

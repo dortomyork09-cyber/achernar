@@ -1,4 +1,4 @@
-/* MINDSPACE — 마인드맵 · 연결 · 링크 열기 */
+/* Achernar — 마인드맵 · 연결 · 링크 열기 */
 const Mind=(()=>{
 const ap=()=>Canvas.api,C=()=>ap().C();
 const tx=i=>{const d=document.createElement('div');d.innerHTML=i?.text||i?.title||'';return d.textContent.trim()};

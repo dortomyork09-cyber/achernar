@@ -1,4 +1,4 @@
-/* MINDSPACE — 인쇄: 캔버스·선택·화면·프레임·슬라이드·문서를 종이로 */
+/* Achernar — 인쇄: 캔버스·선택·화면·프레임·슬라이드·문서를 종이로 */
 const Print=(()=>{
 const ap=()=>Canvas.api;
 const PAPER={a4p:['A4 세로','210mm','297mm'],a4l:['A4 가로','297mm','210mm'],a3l:['A3 가로','420mm','297mm'],ltp:['레터 세로','216mm','279mm']};
@@ -22,13 +22,13 @@ function css(){const[,W,H]=PAPER[opt.paper];const m=opt.margin==='0'?'0':opt.mar
   return `@page{size:${W} ${H};margin:${m}}html,body{margin:0;background:#fff;font:12px "Pretendard","Noto Sans KR",sans-serif;color:#555}${opt.gray?'img{filter:grayscale(1)}':''}
   .pg{width:calc(${W} - 2*${m});height:calc(${H} - 2*${m});display:flex;flex-direction:column;page-break-after:always;break-after:page;overflow:hidden}.pg:last-child{page-break-after:auto;break-after:auto}
   .hd{display:flex;justify-content:space-between;padding:0 0 3mm;font-size:10px;color:#888}.im{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}.im img{max-width:100%;max-height:100%;object-fit:contain}`}
-function pagesHTML(ps){const ttl=esc(One.main().title||'MINDSPACE'),d=new Date().toLocaleDateString('ko-KR');return ps.map((p,i)=>`<div class="pg">${opt.head&&!p.slide?`<div class="hd"><span>${ttl} · ${esc(p.t)}</span><span>${d} · ${i+1}/${ps.length}</span></div>`:''}<div class="im"><img src="${p.u}"></div></div>`).join('')}
+function pagesHTML(ps){const ttl=esc(One.main().title||'Achernar'),d=new Date().toLocaleDateString('ko-KR');return ps.map((p,i)=>`<div class="pg">${opt.head&&!p.slide?`<div class="hd"><span>${ttl} · ${esc(p.t)}</span><span>${d} · ${i+1}/${ps.length}</span></div>`:''}<div class="im"><img src="${p.u}"></div></div>`).join('')}
 function frame(body,style,title){const f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0';document.body.appendChild(f);const d=f.contentDocument;d.open();d.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>${style}</style></head><body>${body}</body></html>`);d.close();
   const imgs=[...d.images];Promise.all(imgs.map(im=>im.complete?0:new Promise(r=>{im.onload=im.onerror=r}))).then(()=>setTimeout(()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(e){toast('인쇄 창을 열 수 없어요 · ‘인쇄용 파일’로 받아서 열어 보세요')}setTimeout(()=>f.remove(),60000)},200))}
 function fileOf(body,style,title){const html=`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>${style}</style></head><body>${body}<script>addEventListener('load',()=>setTimeout(()=>print(),300))<\/script></body></html>`;saveFile(title+' (인쇄용).html',new Blob([html],{type:'text/html'}))}
 async function build(){if(opt.what==='doc'){const C=ap().C();const sel=Canvas.sel().find(i=>i.type==='doc');const it=sel||C.items.find(i=>i.type==='doc');const[,W,H]=PAPER[opt.paper.replace('l','p')]||PAPER.a4p;
     return{body:it.text||'',style:DocPPT.DOCCSS+`@page{size:${W} ${H};margin:${opt.margin==='0'?'0':opt.margin==='s'?'10mm':'18mm'}}body{margin:0 auto;max-width:none}${opt.gray?'*{color:#000!important}':''}`,title:DocPPT.titleOf(it)}}
-  const ps=await pages();if(!ps.length)return null;return{body:pagesHTML(ps),style:css(),title:(One.main().title||'MINDSPACE')+(opt.what==='slides'?' 슬라이드':''),n:ps.length,ps}}
+  const ps=await pages();if(!ps.length)return null;return{body:pagesHTML(ps),style:css(),title:(One.main().title||'Achernar')+(opt.what==='slides'?' 슬라이드':''),n:ps.length,ps}}
 /* 인쇄 창 */
 async function open(what){One.home();await new Promise(r=>setTimeout(r,120));const ch=choices();opt.what=what&&ch.some(c=>c[0]===what)?what:(Canvas.sel().length?'sel':ch.some(c=>c[0]==='slides')&&opt.what==='slides'?'slides':'all');if(opt.what==='slides'||opt.what==='frames')opt.paper='a4l';
   const radio=(k,list,cur)=>list.map(([v,t,s])=>`<label class="prc${v===cur?' on':''}"><input type="radio" name="${k}" value="${v}" ${v===cur?'checked':''}><b>${t}</b>${s?`<small>${s}</small>`:''}</label>`).join('');

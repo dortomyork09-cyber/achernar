@@ -1,4 +1,4 @@
-/* MINDSPACE — 저장 화면: 저장·메모·묶음이 놓이는 캔버스 */
+/* Achernar — 저장 화면: 저장·메모·묶음이 놓이는 캔버스 */
 const SaveBoard=(()=>{
 let st=null;const CW=300,GAP=40,COLS=4,CH=CW*.75+92;
 const fmt=t=>new Date(t).toLocaleString('ko-KR',{year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
@@ -92,7 +92,7 @@ async function ren(id){const l=await One.list(),x=l.find(y=>y.id===id);if(!x)ret
 async function memo(id){const l=await One.list(),x=l.find(y=>y.id===id);if(!x)return;const n=await ask('설명 메모',{val:x.memo||'',multi:true,ph:'이 저장에 대한 짧은 설명'});if(n!=null){x.memo=n.trim();await One.put(l);render()}}
 async function tag(ids,c){const l=await One.list();l.forEach(x=>{if(ids.includes(x.id))x.tag=c||undefined});await One.put(l);render()}
 async function dupSave(id){const l=await One.list(),x=l.find(y=>y.id===id);if(!x)return;const n={...JSON.parse(JSON.stringify(x)),id:uid(),name:x.name+' 복사본',bx:x.bx+30,by:x.by+30};l.unshift(n);await One.put(l.slice(0,60));render()}
-function exportOne(id){const x=st.l.find(y=>y.id===id);if(x)saveFile(x.name+'.mindspace.json',new Blob([JSON.stringify({mindspaceSave:1,...x})],{type:'application/json'}))}
+function exportOne(id){const x=st.l.find(y=>y.id===id);if(x)saveFile(x.name+'.achernar.json',new Blob([JSON.stringify({mindspaceSave:1,...x})],{type:'application/json'}))}
 async function del(){const ks=[...st.sel];if(!ks.length)return;const ss=ks.filter(k=>k[0]==='s').map(k=>k.slice(2));const l=await One.list();
   if(ss.length&&!await confirmDlg(ss.length>1?`저장 ${ss.length}개를 지울까요?`:'이 저장을 지울까요?',`${esc(l.filter(x=>ss.includes(x.id)).map(x=>x.name).slice(0,3).join(', '))}${ss.length>3?' 외':''} · 지금 캔버스는 그대로예요.`,'지우기',1))return;
   if(ss.length)await One.put(l.filter(x=>!ss.includes(x.id)));st.notes=st.notes.filter(n=>!st.sel.has('n:'+n.id));st.groups=st.groups.filter(g=>!st.sel.has('g:'+g.id));await putMeta();st.sel.clear();render()}
