@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MINDSPACE — A space for every thought.</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2318181B'/%3E%3Cpath d='M22 40V22h18' stroke='%23fff' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='41' cy='41' r='3.6' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#FAFAFA"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="description" content="MINDSPACE — 캔버스 하나에서 메모·마인드맵·문서·발표까지">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Noto+Serif+KR:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <nav id="rail" aria-label="주요 메뉴">
+    <button class="rcreate" id="railNew" title="새로 만들기 (Ctrl+N)" aria-label="새로 만들기"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    <div class="rlist" id="railList"></div>
+    <div class="rfoot">
+      <button class="ritem" data-rail="settings" title="설정"><span class="ri" data-i="settings"></span><span>설정</span></button>
+      <button class="avatar" id="me" title="내 프로필" aria-label="내 프로필">나</button>
+    </div>
+  </nav>
+  <aside id="side" aria-label="워크스페이스">
+    <div class="shead">
+      <button class="ws" id="wsBtn"><span class="wslogo">U</span><span class="wsn" id="wsName">내 워크스페이스</span><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg></button>
+      <button class="ib sm" id="sideClose" title="사이드바 접기 (Ctrl+\)" aria-label="사이드바 접기"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+    </div>
+    <div class="sscroll" id="sideBody"></div>
+    <div class="sfoot" id="sideFoot"></div>
+    <div class="resizer" data-rs="side"></div>
+  </aside>
+  <div id="center">
+    <header id="top">
+      <button class="ib" id="navBtn" aria-label="메뉴"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <button class="ib" id="backBtn" title="뒤로 (Alt+←)" aria-label="뒤로"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <button class="ib" id="fwdBtn" title="앞으로 (Alt+→)" aria-label="앞으로"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+      <nav class="crumbs" id="crumbs" aria-label="현재 위치"></nav>
+      <button class="search" id="searchBtn"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span>검색하거나 명령 실행</span><kbd>Ctrl P</kbd></button>
+      <div class="tright">
+        <span class="savest" id="saveSt"></span>
+        <button class="btn grad" id="createBtn"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>만들기</span></button>
+        <span class="syncst local" id="syncSt"></span>
+        <button class="ib bellb" id="bellBtn" title="마감 알림" aria-label="마감 알림"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4"/></svg><b id="bellN" hidden></b></button>
+        <button class="btn ghost" id="shareBtn" title="이 문서를 공유 (claude.ai)"><svg viewBox="0 0 24 24"><path d="M4 12v7h16v-7M12 3v12M7 8l5-5 5 5"/></svg><span>공유</span></button>
+        <button class="ib" id="pageMenuBtn" title="문서 설정" aria-label="문서 설정"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
+        <button class="ib" id="panelBtn" title="오른쪽 패널" aria-label="오른쪽 패널"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16"/></svg></button>
+      </div>
+    </header>
+    <div id="ribbon" role="toolbar" aria-label="리본"></div>
+    <div id="body">
+      <main id="main" tabindex="-1"></main>
+      <aside id="rpanel" aria-label="보조 패널"><div class="resizer l" data-rs="panel"></div><div class="rtabs" id="rtabs"></div><div class="rbody" id="rbody"></div></aside>
+    </div>
+  </div>
+</div>
+<div id="scrim"></div>
+<nav id="sdock" aria-label="빠른 독">
+  <button data-dk="new" class="dkp" title="새로 만들기"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>새로</span></button>
+  <button data-dk="quick" title="빠른 메모"><svg viewBox="0 0 24 24"><path d="M4 20l1-4L16 5l3 3L8 19z"/></svg><span>메모</span></button>
+  <button data-dk="find" title="찾기 (Ctrl+P)"><svg viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0-14M20 20l-4-4"/></svg><span>찾기</span></button>
+  <i></i>
+  <button data-dk="drawer" title="서랍 (Ctrl+\)"><svg viewBox="0 0 24 24"><path d="M3 4h18v6H3zM3 14h18v6H3zM10 7h4M10 17h4"/></svg><span>서랍</span></button>
+</nav>
+<div id="menu" hidden role="menu"></div>
+<div id="pop" hidden></div>
+<div id="fmt" hidden></div>
+<div id="modal" hidden><div class="mbox" role="dialog" aria-modal="true"><div id="mhead"></div><div id="mbody"></div><div class="mact" id="mact"></div></div></div>
+<div id="toast" hidden role="status"></div>
+<input type="file" id="fileIn" hidden>
+<script src="core.js"></script>
+<script src="icons.js"></script>
+<script src="extra.js"></script>
+<script src="editor.js"></script>
+<script src="database.js"></script>
+<script src="canvas.js"></script>
+<script src="graph.js"></script>
+<script src="sync.js"></script>
+<script src="auth.js"></script>
+<script src="ms.js"></script>
+<script src="ms2.js"></script>
+<script src="zen.js"></script>
+<script src="one.js"></script>
+<script src="feat.js"></script>
+<script src="mind.js"></script>
+<script src="world.js"></script>
+<script src="mind3d.js"></script>
+<script src="saveboard.js"></script>
+<script src="docppt.js"></script>
+<script src="print.js"></script>
+<script>boot()</script>
+<script>
+/* 설치형 웹앱: 오프라인 캐시 + 설치 버튼 */
+window.__pwa=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();window.__pwa=e});
+addEventListener('appinstalled',()=>{window.__pwa=null;try{toast('MINDSPACE가 앱으로 설치됐어요')}catch(e){}});
+if('serviceWorker' in navigator&&location.protocol==='https:'&&window.self===window.top){addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+</script>
+</body></html>
