@@ -1311,3 +1311,10 @@ ul.dchk>li.done::before{background-color:#141C33;border-color:#141C33}
 #m3d{background:#F7F4EC}#m3d.night{background:#0B1022}
 .vchip{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px;margin-left:6px;border-radius:13px;background:#EEF0F6;color:#141C33;font-size:12px;font-weight:500}.vchip svg{width:13px;height:13px}.vchip:hover{background:#E3E6F0}.vchip.off{background:#FFF1E0;color:#8A4B00}.vchip[hidden]{display:none}
 @media(max-width:700px){.vchip span{display:none}}
+/* 알림(되돌리기)이 아래 도구 막대와 겹치지 않게 위로 */
+#toast{bottom:92px!important;top:auto!important}
+/* 도형·화살표 도구 */
+#vp[data-tool=shape],#vp[data-tool=arrow],#vp[data-tool=shape] .card,#vp[data-tool=arrow] .card{cursor:crosshair!important}
+.card.lktarget{outline:2px solid var(--sel);outline-offset:4px}
+#ctx .shk{gap:6px}#ctx .shk svg{flex:none}
+#ctx .shk span{display:none}#ctx .shk.on span{display:inline}
