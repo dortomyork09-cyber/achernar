@@ -31,7 +31,7 @@ const MS={
   setInterval(()=>MS.status(),1500);if(!MS._i2){MS._i2=1;MS2.init()}else{const st=$('#status .str');if(st&&!$('#stMood')){st.parentElement.insertAdjacentHTML('beforeend',`<button id="stMood">${ic('sun')}<span>기본</span></button>`);$('#stMood').onclick=()=>MS2.mood()}}},
  after(){try{Zen.init();Zen.after();One.after()}catch(e){console.warn(e)}const r=route;$$('#railList .ritem').forEach(b=>{const g=b.dataset.go,cp=curPage();b.classList.toggle('on',g===r||(cp&&((cp.kind&&g==='kind:'+cp.kind)||(!cp.kind&&g==='all:'+cp.type&&cp.type!=='db')||(cp.type==='db'&&!cp.kind&&g==='lab'))))});
   const cv=curPage()?.type==='canvas';$('#stCv').hidden=!cv;document.body.classList.toggle('nomini',!!S.settings.nomini);if(!cv)MS.props([]);MS.status();
-  if(cv)MS2.capsuleCheck();const h=$('#cvhint');if(h)h.innerHTML=`<b>${L('hint1')}</b><span>${L('hint2')}</span>`},
+  if(cv)MS2.capsuleCheck();},
  status(){const s=$('#stSave');if(!s)return;s.textContent=$('#saveSt')?.textContent||L('saved');const p=curPage(),i=$('#stInfo');
   i.textContent=p?(p.type==='canvas'?`${TYPES.canvas.n} · ${p.cv.items.length} ${L('items')}`:p.type==='doc'?`${TYPES.doc.n} · ${(Editor.text(p).match(/\S+/g)||[]).length} ${L('words')}`:p.type==='db'?`${TYPES.db.n} · ${p.db.rows.length} ${L('rows')}`:TYPES[p.type].n):`${live().length} · ${S.ws}`},
  undo(re){const p=curPage();if(p?.type==='canvas')return Canvas.cmd(re?'redo':'undo');document.execCommand(re?'redo':'undo')},

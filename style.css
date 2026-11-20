@@ -1318,3 +1318,11 @@ ul.dchk>li.done::before{background-color:#141C33;border-color:#141C33}
 .card.lktarget{outline:2px solid var(--sel);outline-offset:4px}
 #ctx .shk{gap:6px}#ctx .shk svg{flex:none}
 #ctx .shk span{display:none}#ctx .shk.on span{display:inline}
+/* 첫 화면 안내 + 템플릿 갤러리 */
+#cvhint .hbtn{margin-top:10px;pointer-events:auto}#cvhint .hbtn .btn{background:#141C33;color:#F4EFE3;border-color:#141C33;padding:10px 18px;font-size:14px}
+#cvhint .htips{list-style:none;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;padding:0;margin:14px 0 0;font-size:12.5px;color:var(--mute)}
+#cvhint kbd{font:inherit;font-weight:600;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-right:4px}
+.tplg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tplc{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:16px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;transition:border-color .15s,transform .15s}
+.tplc:hover{border-color:var(--sel);transform:translateY(-1px)}.tplc b{font-size:15px;color:var(--ink)}.tplc span:last-child{font-size:12.5px;color:var(--mute);line-height:1.5}
+.tpli{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:#141C33;color:#F4EFE3}.tpli svg{width:17px;height:17px}

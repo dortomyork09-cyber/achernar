@@ -8,7 +8,7 @@ const One={
   $('#osave').onclick=()=>SaveBoard.open();$('#onew').onclick=()=>One.newCanvas();addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.altKey&&e.key.toLowerCase()==='n'&&One.on()){e.preventDefault();One.newCanvas()}});$('#oback').onclick=()=>go('page:'+One.main().id);
   $('#omore').onclick=e=>{const r=e.currentTarget.getBoundingClientRect();menu(r.right-240,r.bottom+6,[
     {t:'카드 추가 메뉴 ( / )',i:'plus',fn:()=>{One.home();setTimeout(()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'/',code:'Slash',bubbles:true})),120)}},
-    ...DocPPT.moreMenu(),...(typeof Vault!=='undefined'?Vault.moreMenu():[]),...World.moreMenu(),'-',
+    ...(typeof Tpl!=='undefined'?Tpl.moreMenu():[]),...DocPPT.moreMenu(),...(typeof Vault!=='undefined'?Vault.moreMenu():[]),...World.moreMenu(),'-',
     {t:'만들기 · 녹음 · 사진',i:'plus',sub:Feat.menu(null)},...Feat.tools(),'-',
     ...(window.__pwa?[{t:'앱으로 설치하기',i:'dl',fn:async()=>{const p=window.__pwa;p.prompt();await p.userChoice;window.__pwa=null}}]:[]),{t:'새 캔버스',i:'plus',k:'Ctrl Alt N',fn:()=>One.newCanvas()},{t:'인쇄',i:'page',k:'Ctrl P',fn:()=>Print.open()},{t:'화면 맞춤',i:'fit',k:'Ctrl 0',fn:()=>Canvas.cmd('fit')},
     '-',{t:'사용 가이드',i:'help',fn:()=>One.help()},{t:'설정',i:'settings',fn:()=>openSettings()},{t:'여러 페이지로 쓰기 (모든 도구)',i:'layout',fn:()=>{S.settings.one=0;S.settings.simple=0;applySettings();save();render();toast('여러 페이지 모드로 바꿨어요 · 설정에서 다시 캔버스 하나 모드로 돌아올 수 있어요')}}])};
