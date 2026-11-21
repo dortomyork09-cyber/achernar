@@ -47,7 +47,7 @@ function dress(){st.N.forEach(n=>{n.mesh.scale.setScalar(n.r);n.glow.scale.setSc
 async function open(rootId){if(st)return;One.home?.();await new Promise(r=>setTimeout(r,120));const g=collect(rootId);if(!g.nodes.length)return toast('캔버스에 카드를 만들고 선으로 이어 보세요 · 그게 우주의 행성이 돼요');
   document.body.classList.add('w3open');const el=document.createElement('div');el.id='m3d';el.innerHTML=`<div class="w3load"><div><i></i>우주를 펼치는 중…</div></div>`;document.body.appendChild(el);
   try{await loadThree()}catch(e){el.remove();document.body.classList.remove('w3open');return toast('3D 엔진을 불러오지 못했어요')}
-  el.innerHTML=`<canvas></canvas><div class="w3top"><button class="w3b" data-m="back">${ic('back')}캔버스로</button><span class="w3t">${ic('node')}<span></span></span><span class="sp"></span><button class="w3b pri" data-m="mode">${ic('restore')}<span>궤도</span></button><button class="w3b" data-m="tour">${ic('play')}<span>우주 여행</span></button><button class="w3b" data-m="sky">${ic('moon')}<span>밤하늘</span></button><button class="w3b" data-m="shot">${ic('camera')}사진</button></div><div class="w3hint">끌어서 돌리기 · 휠로 확대 · 행성을 누르면 따라가요 · 빈 곳 더블클릭: 새 행성 · 스페이스: 시간 멈춤</div>`;
+  el.innerHTML=`<canvas></canvas><div class="w3top"><button class="w3b" data-m="back">${ic('back')}캔버스로</button><span class="w3t">${ic('node')}<span></span></span><span class="sp"></span><button class="w3b pri" data-m="mode">${ic('restore')}<span>궤도</span></button><button class="w3b" data-m="tour">${ic('play')}<span>우주 여행</span></button><button class="btn sm" data-m="pres" title="행성을 하나씩 넘기며 설명 (← → 스페이스)">${ic('board')}<span>우주 발표</span></button><button class="w3b" data-m="sky">${ic('moon')}<span>밤하늘</span></button><button class="w3b" data-m="shot">${ic('camera')}사진</button></div><div class="w3hint">끌어서 돌리기 · 휠로 확대 · 행성을 누르면 따라가요 · 빈 곳 더블클릭: 새 행성 · 스페이스: 시간 멈춤</div>`;
   const cv=el.querySelector('canvas');const R=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true,preserveDrawingBuffer:true});R.setPixelRatio(Math.min(devicePixelRatio,1.75));R.setSize(innerWidth,innerHeight);R.outputEncoding=THREE.sRGBEncoding;
   const scene=new THREE.Scene();const cam=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,.1,3000);st={el,R,scene,cam,g,mode:'orbit',speed:1,sel:null,time:0,clock:new THREE.Clock(),shoot:[],night:false};
   st.orbMat=new THREE.LineBasicMaterial({color:'#8F91EE',transparent:true,opacity:.3});
@@ -65,11 +65,12 @@ async function open(rootId){if(st)return;One.home?.();await new Promise(r=>setTi
     if(k==='mode'){st.mode=st.mode==='orbit'?'free':'orbit';lb.textContent=st.mode==='orbit'?'궤도':'자유 연결';b.classList.toggle('pri',st.mode==='orbit');st.N.forEach(n=>n.vel.set(0,0,0));dress();if(st.sel)select(st.sel)}
     if(k==='speed')setSpeed([1,3,8,0][([1,3,8,0].indexOf(st.speed)+1)%4]);
     if(k==='tour')st.tour?stopTour():tour();
+    if(k==='pres')st.pres?stopPres():startPres();
     if(k==='wish')wish();
     if(k==='sky'){st.night=!st.night;el.classList.toggle('night',st.night);lb.textContent=st.night?'낮하늘':'밤하늘';st.stars.forEach(s=>s.material.color.set(st.night?'#ffffff':'#8E90E8'));st.orbMat.color.set(st.night?'#B9BBFF':'#8F91EE')}
     if(k==='shot')shot()};
   st.onR=()=>{R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()};addEventListener('resize',st.onR);
-  st.onK=e=>{if(!$('#modal').hidden||e.target.closest?.('input,textarea'))return;if(e.key==='Escape'){if(st.tour)return stopTour();if($('#w3card'))return select(null);close()}if(e.key===' '){e.preventDefault();setSpeed(st.speed?0:1)}};addEventListener('keydown',st.onK);
+  st.onK=e=>{if(!$('#modal').hidden||e.target.closest?.('input,textarea'))return;if(st.pres){if(['ArrowRight','ArrowDown','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();return presGo(st.pres.i+1)}if(['ArrowLeft','ArrowUp','PageUp','Backspace'].includes(e.key)){e.preventDefault();return presGo(st.pres.i-1)}if(e.key==='Escape'){e.preventDefault();return stopPres()}}if(e.key==='Escape'){if(st.tour)return stopTour();if($('#w3card'))return select(null);close()}if(e.key===' '){e.preventDefault();setSpeed(st.speed?0:1)}};addEventListener('keydown',st.onK);
   loop()}
 function setSpeed(v){st.speed=v;toast(v?'다시 움직여요':'잠깐 멈췄어요 · 스페이스로 다시 움직여요',{ms:1200})}
 function shot(){const R=st.R,pr=R.getPixelRatio();R.setPixelRatio(Math.min(4,Math.max(2,devicePixelRatio)*1.5));R.setSize(innerWidth,innerHeight);R.render(st.scene,st.cam);R.domElement.toBlob(bl=>{bl&&saveFile('my-universe.png',bl);R.setPixelRatio(pr);R.setSize(innerWidth,innerHeight)},'image/png')}
@@ -108,6 +109,14 @@ function tour(){const order=[];const walk=n=>{order.push(n);n.kids.forEach(walk)
   const next=()=>{if(!st?.tour)return;const n=order[st.tour.i++%order.length];st.tourN=n;st.d.dist=Math.max(18,n.r*8+(n.kids.length?n.ext*1.4:0));showTag(n);st.tour.tm=setTimeout(next,3200)};next()}
 function stopTour(){if(!st?.tour)return;clearTimeout(st.tour.tm);st.tour=null;st.tourN=null;$('#m3dtag')?.remove();const b=st.el.querySelector('[data-m=tour]');b.classList.remove('pri');b.querySelector('span').textContent='우주 여행'}
 function showTag(n){$('#m3dtag')?.remove();const d=document.createElement('div');d.id='m3dtag';d.innerHTML=`<small>${n===st.sun?'태양':n.d===1?'행성':'위성'}</small><b>${esc(n.t.slice(0,40))}</b>${n.it?.note?`<p>${esc(String(n.it.note).slice(0,120))}</p>`:''}`;st.el.appendChild(d)}
+/* 우주 발표: 행성을 하나씩 넘기며 설명 */
+function startPres(){stopTour();const order=[];const walk=n=>{if(!n.virtual)order.push(n);n.kids.forEach(walk)};walk(st.sun);if(!order.length)return;select(null);st.pres={order,i:0};st.el.classList.add('m3pres');
+  const b=st.el.querySelector('[data-m=pres]');b.classList.add('pri');b.querySelector('span').textContent='발표 끝내기';try{st.el.requestFullscreen?.().catch(()=>{})}catch(e){}presGo(0)}
+function presGo(i){if(!st?.pres)return;const P=st.pres;i=Math.max(0,Math.min(P.order.length-1,i));P.i=i;const n=P.order[i];st.tourN=n;st.d.dist=Math.max(16,n.r*7+(n.kids.length?n.ext*1.2:0));
+  $('#m3dtag')?.remove();const d=document.createElement('div');d.id='m3dtag';d.className='big';const kids=n.kids.filter(k=>!k.virtual).map(k=>k.t);
+  d.innerHTML=`<small>${n===st.sun?'중심 생각':n.d===1?'큰 가지':'작은 가지'} · ${i+1} / ${P.order.length}</small><b>${esc(n.t.slice(0,60))}</b>${n.it?.note?`<p>${esc(String(n.it.note).slice(0,200))}</p>`:''}${kids.length?`<ul>${kids.slice(0,6).map(k=>`<li>${esc(k.slice(0,40))}</li>`).join('')}</ul>`:''}<div class="m3pb"><button data-pv="-1">← 이전</button><button data-pv="1">다음 →</button></div>`;
+  d.onclick=e=>{const v=e.target.closest('[data-pv]')?.dataset.pv;if(v)presGo(P.i+ +v)};st.el.appendChild(d)}
+function stopPres(){if(!st?.pres)return;st.pres=null;st.tourN=null;$('#m3dtag')?.remove();st.el.classList.remove('m3pres');const b=st.el.querySelector('[data-m=pres]');b.classList.remove('pri');b.querySelector('span').textContent='우주 발표';try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}}
 /* 조작 */
 function bind(cv){let down=null;const ray=new THREE.Raycaster(),v=new THREE.Vector2();const hit=e=>{const r=cv.getBoundingClientRect();v.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(v,st.cam);return ray.intersectObjects(st.N.flatMap(n=>[n.mesh,n.sp]),false)[0]};
   cv.addEventListener('contextmenu',e=>e.preventDefault());
@@ -127,5 +136,5 @@ function select(id){st.sel=id;const keep=id?family(id):null;
   <div class="w3cb" style="flex-wrap:wrap"><button class="btn sm ghost" data-b="add">${n===st.sun?'+ 행성':'+ 위성'}</button>${n.virtual?'':`<button class="btn sm ghost" data-b="ren">이름 바꾸기</button><button class="btn sm pr" data-b="edit">캔버스에서 편집</button>`}</div>`;
   d.onclick=e=>{if(e.target.closest('[data-x]'))return select(null);const b=e.target.closest('[data-b]');if(!b)return;const k=b.dataset.b;if(k==='edit')edit(id);if(k==='add')newPlanet();if(k==='wish')wish();if(k==='ren')rename(n)};st.el.appendChild(d)}
 function edit(id){close();setTimeout(()=>Feat.fly(id),250)}
-function close(){if(!st)return;stopTour();cancelAnimationFrame(st.raf);removeEventListener('resize',st.onR);removeEventListener('keydown',st.onK);try{st.scene.traverse(o=>{o.geometry?.dispose?.();o.material?.map?.dispose?.();o.material?.dispose?.()});st.R.dispose()}catch(e){}st.el.remove();st=null;document.body.classList.remove('w3open')}
+function close(){if(!st)return;stopTour();stopPres();cancelAnimationFrame(st.raf);removeEventListener('resize',st.onR);removeEventListener('keydown',st.onK);try{st.scene.traverse(o=>{o.geometry?.dispose?.();o.material?.map?.dispose?.();o.material?.dispose?.()});st.R.dispose()}catch(e){}st.el.remove();st=null;document.body.classList.remove('w3open')}
 return{open,close,isOpen:()=>!!st}})();

@@ -9,7 +9,7 @@ function build(kind){
   const fr=(x,y,w,h,label)=>n('frame',x,y,{w,h,text:label,c:'l'});
   const tip=(x,y,html,w=260)=>n('sticky',x,y,{text:html,c:'y',w,h:120});
   const mind=(x,y,root,kids,c='s')=>{const r=n('node',x,y,{text:'<b>'+root+'</b>',c:'y',w:170});kids.forEach((k,i)=>{const b=n('node',x+230,y-((kids.length-1)*34)+i*68,{text:k,c,w:150});ln(r,b)});return r};
-  let sn=0;
+  let sn=1;
   const slide=(x,y,title,body)=>{const f=n('frame',x,y,{w:SW,h:SH,text:'',slide:1,c:'w',bg:'#FFFFFF',sn:sn++});
     const T=(tx,ty,w,html,fs,al,h)=>n('text',x+tx,y+ty,{w,text:html,fs,...(al?{al}:{}),h:h||0,plain:1});
     if(body===null){T(80,170,800,'<b>'+title+'</b>',58,'center');T(160,320,640,'과목 · 조 이름 · 날짜',24,'center')}
@@ -50,16 +50,54 @@ function build(kind){
   return {cv,name};
 }
 const LIST=[['group','조별 발표','주제 → 역할 → 자료 → 할 일 → 슬라이드 4장','user'],['inquiry','탐구 보고서','질문 → 가설 → 실험 → 결과 → 보고서 문서','search'],['book','독서·감상문','작품 정보 → 인상 깊은 장면 → 생각 → 감상문','page'],['exam','시험 공부 정리','단원 마인드맵 → 핵심 개념 → 헷갈리는 것','node']];
-async function use(kind){
-  const {cv,name}=build(kind);const m=One.main();One.home();await new Promise(r=>setTimeout(r,80));
+async function applyCv(cv,name){const m=One.main();One.home();await new Promise(r=>setTimeout(r,80));
   const cnt=m.cv?.items?.length||0;
   if(cnt){const ok=await confirmDlg(`‘${name}’ 템플릿으로 시작할까요?`,`지금 캔버스(카드 ${cnt}개)는 ‘${esc(m.title||'내 캔버스')}’ 이름으로 저장 화면에 보관돼요.`,'템플릿으로 시작');if(!ok)return;await One.snap(m.title||'내 캔버스')}
+  if(m.room&&typeof Collab!=='undefined')Collab.leave();
   m.cv=cv;m.title=name;touch(m);flush();if(window.render)render();
-  setTimeout(()=>{try{Canvas.api.fit()}catch(e){}},250);toast(`‘${name}’ 템플릿을 열었어요`);
+  setTimeout(()=>{try{Canvas.api.fit()}catch(e){}},250);toast(`‘${name}’ 템플릿을 열었어요`)}
+async function use(kind){const {cv,name}=build(kind);return applyCv(cv,name)}
+/* 템플릿 복사: id를 새로 매겨 다른 캔버스와 겹치지 않게 */
+function fresh(src){const cv=JSON.parse(JSON.stringify(src)),map={};const nid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+  (cv.items||[]).forEach(it=>{const n=nid();map[it.id]=n;it.id=n;['by','byn','eb','ebn','et','ec'].forEach(k=>delete it[k])});
+  (cv.links||[]).forEach(l=>{l.id=nid();l.a=map[l.a]||l.a;l.b=map[l.b]||l.b});(cv.strokes||[]).forEach(s=>s.id=nid());cv.comments=[];cv.view=null;return cv}
+function clean(c){return {items:c.items||[],links:c.links||[],strokes:c.strokes||[],grid:c.grid!==false}}
+/* 내 템플릿 (이 기기) */
+const getMine=async()=>{try{const v=await tx('kv','readonly',s=>s.get('mytpl'));return v?JSON.parse(v):[]}catch(e){return[]}};
+const setMine=a=>tx('kv','readwrite',s=>s.put(JSON.stringify(a),'mytpl'));
+async function saveMine(){const c=Canvas.api.C();if(!c||!c.items.length)return toast('빈 캔버스는 템플릿으로 저장할 수 없어요');
+  const m=One.main();const t=(await ask('템플릿 이름',{val:m.title&&m.title!=='내 캔버스'?m.title:'',ph:'예) 우리 조 발표 양식',ok:'다음'})||'').trim().slice(0,40);if(!t)return;
+  const d=((await ask('한 줄 설명 (선택)',{ph:'예) 주제·역할·자료·슬라이드까지',ok:'저장'}))||'').trim().slice(0,80);
+  const a=await getMine();a.unshift({id:'t'+Date.now().toString(36),t,d,at:Date.now(),n:c.items.length,cv:clean(JSON.parse(JSON.stringify(c)))});await setMine(a.slice(0,60));toast(`‘${t}’을(를) 내 템플릿에 저장했어요`,{act:'보기',fn:()=>open('mine')})}
+/* 학교 템플릿 (로그인 필요) */
+const mySchool=()=>{try{return localStorage.getItem('ach-school')||''}catch(e){return ''}};
+async function askSchool(force){let sc=mySchool();if(sc&&!force)return sc;sc=((await ask('학교 이름',{val:sc,sub:'같은 학교 학생끼리 템플릿을 나눠 써요. 예) 광주고등학교',ph:'○○고등학교',ok:'확인'}))||'').trim().replace(/\s+/g,'').slice(0,30);if(!sc)return '';try{localStorage.setItem('ach-school',sc)}catch(e){}return sc}
+async function publish(t){if(typeof Collab==='undefined')return;const C=await Collab.cloud('학교 템플릿에 올리려면 구글 계정으로 로그인해 주세요.');if(!C)return;const sc=await askSchool();if(!sc)return;
+  const ok=await confirmDlg(`‘${t.t}’을(를) ${sc} 템플릿에 올릴까요?`,'같은 학교 이름을 넣은 사람은 누구나 이 템플릿을 보고 쓸 수 있어요. 이름·연락처 같은 개인 정보가 들어 있지 않은지 확인해 주세요. 사진·파일 카드는 올라가지 않아요.','올리기');if(!ok)return;
+  const cv=clean(t.cv);cv.items=cv.items.filter(i=>!['image','video','audio','file'].includes(i.type));const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const v={s:sc,t:t.t,d:t.d||'',by:C.uid,n:C.name,at:Date.now(),cnt:cv.items.length,cv:JSON.stringify(cv)};
+  if(v.cv.length>400000)return toast('템플릿이 너무 커서 올릴 수 없어요');
+  try{await C.db.ref('tpls/'+id).set(v);toast(`${sc} 템플릿에 올렸어요`,{act:'보기',fn:()=>open('school')})}catch(e){console.warn(e);toast('올리지 못했어요: '+(e.code||e.message),{ms:3500})}}
+async function schoolList(){const C=await Collab.cloud('학교 템플릿은 구글 계정으로 로그인하면 볼 수 있어요.');if(!C)return null;const sc=await askSchool();if(!sc)return null;
+  try{const v=(await C.db.ref('tpls').orderByChild('s').equalTo(sc).once('value')).val()||{};return {sc,C,list:Object.entries(v).sort((a,b)=>b[1].at-a[1].at)}}catch(e){console.warn(e);toast('학교 템플릿을 불러오지 못했어요');return null}}
+async function open(tab='base'){
+  const tabs=`<nav class="tpt"><button data-tab="base" class="${tab==='base'?'on':''}">기본</button><button data-tab="mine" class="${tab==='mine'?'on':''}">내 템플릿</button><button data-tab="school" class="${tab==='school'?'on':''}">학교 템플릿</button></nav>`;
+  let body='';
+  if(tab==='base')body=`<p class="note" style="margin:0 0 14px">조사부터 발표까지 한 화면에서. 하나를 고르면 새 캔버스로 열려요.</p><div class="tplg">${LIST.map(([k,n,d,i])=>`<button class="tplc" data-tk="${k}"><span class="tpli">${ic(i)}</span><b>${n}</b><span>${d}</span></button>`).join('')}</div>`;
+  if(tab==='mine'){const a=await getMine();body=`<div class="tph"><span class="note">이 기기에 저장된 나만의 템플릿이에요.</span><button class="btn pr" data-save>지금 캔버스를 템플릿으로 저장</button></div>${a.length?`<div class="tplg">${a.map(t=>`<div class="tplc mine"><button class="tpu" data-mu="${t.id}"><span class="tpli">${ic('gallery')}</span><b>${esc(t.t)}</b><span>${esc(t.d||'')} · 카드 ${t.n}개</span></button><div class="tpa">${typeof Collab!=='undefined'?`<button class="lnk" data-pub="${t.id}">학교에 올리기</button>`:''}<button class="lnk dang" data-mdel="${t.id}">삭제</button></div></div>`).join('')}</div>`:'<p class="note cempty">아직 없어요. 자주 쓰는 캔버스 구성을 만들어 두고 위 버튼을 눌러 보세요.</p>'}`}
+  let S=null;if(tab==='school'){S=await schoolList();if(!S){body='<p class="note cempty">학교 템플릿은 로그인과 학교 이름이 필요해요.</p>'}else{
+    body=`<div class="tph"><span class="note"><b>${esc(S.sc)}</b> 학생들이 올린 템플릿 <button class="lnk" data-sc>학교 바꾸기</button></span></div>${S.list.length?`<div class="tplg">${S.list.map(([id,t])=>`<div class="tplc mine"><button class="tpu" data-su="${id}"><span class="tpli">${ic('user')}</span><b>${esc(t.t)}</b><span>${esc(t.d||'')} · ${esc(t.n||'')} · 카드 ${t.cnt||0}개</span></button>${t.by===S.C.uid?`<div class="tpa"><button class="lnk dang" data-sdel="${id}">내려받기 취소(삭제)</button></div>`:''}</div>`).join('')}</div>`:`<p class="note cempty">아직 ${esc(S.sc)}에 올라온 템플릿이 없어요. ‘내 템플릿’에서 처음으로 올려 보세요.</p>`}`}}
+  modal({title:'템플릿',cls:'mid',html:tabs+body,onOpen:()=>{const B=document.querySelector('#mbody'),q=x=>B.querySelectorAll(x);
+    q('[data-tab]').forEach(b=>b.onclick=()=>{closeModal();open(b.dataset.tab)});
+    q('[data-tk]').forEach(x=>x.onclick=()=>{closeModal();use(x.dataset.tk)});
+    B.querySelector('[data-save]')?.addEventListener('click',()=>{closeModal();saveMine()});
+    q('[data-mu]').forEach(x=>x.onclick=async()=>{const t=(await getMine()).find(z=>z.id===x.dataset.mu);if(!t)return;closeModal();applyCv(fresh(t.cv),t.t)});
+    q('[data-mdel]').forEach(x=>x.onclick=async()=>{const ok=await confirmDlg('이 템플릿을 지울까요?','이 기기에 저장된 내 템플릿에서만 지워져요.','삭제');if(!ok)return;await setMine((await getMine()).filter(z=>z.id!==x.dataset.mdel));open('mine')});
+    q('[data-pub]').forEach(x=>x.onclick=async()=>{const t=(await getMine()).find(z=>z.id===x.dataset.pub);if(t){closeModal();publish(t)}});
+    B.querySelector('[data-sc]')?.addEventListener('click',async()=>{closeModal();await askSchool(true);open('school')});
+    q('[data-su]').forEach(x=>x.onclick=()=>{const t=S.list.find(z=>z[0]===x.dataset.su)[1];let cv;try{cv=JSON.parse(t.cv)}catch(e){return toast('템플릿을 열 수 없어요')}closeModal();applyCv(fresh(cv),t.t)});
+    q('[data-sdel]').forEach(x=>x.onclick=async()=>{const ok=await confirmDlg('학교 템플릿에서 내릴까요?','다른 학생들이 더 이상 이 템플릿을 볼 수 없어요.','내리기');if(!ok)return;try{await S.C.db.ref('tpls/'+x.dataset.sdel).remove();closeModal();open('school')}catch(e){toast('지우지 못했어요')}});
+  }});
 }
-function open(){
-  modal({title:'수행평가 템플릿',cls:'mid',html:`<p class="note" style="margin:0 0 14px">조사부터 발표까지 한 화면에서. 하나를 고르면 새 캔버스로 열려요.</p><div class="tplg">${LIST.map(([k,n,d,i])=>`<button class="tplc" data-tk="${k}"><span class="tpli">${ic(i)}</span><b>${n}</b><span>${d}</span></button>`).join('')}</div>`,
-    onOpen:()=>document.querySelectorAll('#mbody [data-tk]').forEach(x=>x.onclick=()=>{closeModal();use(x.dataset.tk)})});
-}
-return {open,use,build,LIST,moreMenu:()=>[{t:'수행평가 템플릿',i:'gallery',fn:open}]};
+return {open,use,build,LIST,saveMine,moreMenu:()=>[{t:'템플릿',i:'gallery',fn:()=>open()},{t:'지금 캔버스를 내 템플릿으로 저장',i:'save',fn:saveMine}]};
 })();

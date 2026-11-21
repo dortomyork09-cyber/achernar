@@ -25,5 +25,16 @@ async function viewAll(it){let p;try{p=await pages(it)}catch(e){return toast('�
   document.body.appendChild(ov);let z=1;const S=ov.querySelector('.hwps');const set=()=>S.style.setProperty('--hz',z);
   ov.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{z=Math.max(.5,Math.min(2.5,z+(b.dataset.z==='+'?.25:-.25)));set()});
   const close=()=>{ov.remove();removeEventListener('keydown',k,true)};const k=e=>{if(e.key==='Escape'){e.stopPropagation();close()}};addEventListener('keydown',k,true);ov.querySelector('[data-x]').onclick=close}
-return {isHwp,inner,fill,viewAll,pages};
+/* HTML → 한글 파일(.hwp)로 만들기 */
+function prep(html){const d=document.createElement('div');d.innerHTML=html||'';
+  const sz={H1:'20pt',H2:'15pt',H3:'13pt'};d.querySelectorAll('h1,h2,h3').forEach(h=>{const p=document.createElement('p');p.innerHTML=`<span style="font-size:${sz[h.tagName]};font-weight:bold">${h.innerHTML}</span>`;h.replaceWith(p)});
+  d.querySelectorAll('ul.dchk>li').forEach(li=>{li.innerHTML=(li.classList.contains('done')||li.dataset.d==='1'?'☑ ':'☐ ')+li.innerHTML});
+  d.querySelectorAll('blockquote').forEach(q=>{const p=document.createElement('p');p.innerHTML='“'+q.innerHTML+'”';q.replaceWith(p)});
+  d.querySelectorAll('hr').forEach(h=>{const p=document.createElement('p');p.textContent='────────────────────';h.replaceWith(p)});
+  d.querySelectorAll('img').forEach(i=>{if(!/^data:/.test(i.src))i.remove()});
+  d.querySelectorAll('[contenteditable]').forEach(e=>e.removeAttribute('contenteditable'));return d.innerHTML}
+async function toHwp(html,name,fmt='hwp'){try{const m=await lib();const d=m.HwpDocument.createEmpty();d.createBlankDocument();const r=JSON.parse(d.pasteHtml(0,0,0,prep(html))||'{}');if(r.ok===false)throw new Error(r.error||'변환 실패');
+  const bytes=fmt==='hwpx'?d.exportHwpx():d.exportHwp();try{d.free&&d.free()}catch(e){}saveFile((name||'문서')+'.'+fmt,new Blob([bytes],{type:'application/octet-stream'}));toast('한글 파일로 저장했어요 · 한컴오피스에서 열어 고칠 수 있어요',{ms:3000})}
+  catch(e){console.warn(e);toast('한글 파일로 만들지 못했어요: '+(e.message||e),{ms:3500})}}
+return {isHwp,inner,fill,viewAll,pages,toHwp};
 })();
