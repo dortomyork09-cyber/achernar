@@ -35,6 +35,22 @@ async function create(){if(!await needLogin('캔버스를 공유하려면 구글
     await db.ref('rooms/'+r).update(up);
   }catch(e){console.warn(e);return toast('공유를 시작하지 못했어요: '+(e.code||e.message))}
   m.room={id:r,role:'owner',keys};touch(m);flush();remember(r,m.title,'owner',keys);await start(m);toast('공유를 시작했어요 · 링크를 복사해 보내세요');return true}
+/* ---------- 수업 코드 · QR ---------- */
+const CABC='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';const fmtCode=c=>c?c.slice(0,3)+'-'+c.slice(3):'';
+const codeURL=c=>location.origin+location.pathname+'#k='+c;
+async function ensureCode(){if(!room||room.role!=='owner'||!room.keys||!room.keys.e)return null;let c=null;try{c=(await db.ref('rooms/'+room.id+'/meta/code').once('value')).val()}catch(e){}
+  if(c){try{const v=(await db.ref('codes/'+c).once('value')).val();if(v&&v.r===room.id&&v.exp>Date.now())return c}catch(e){}}
+  for(let i=0;i<6;i++){const nc=Array.from(crypto.getRandomValues(new Uint8Array(6)),b=>CABC[b%CABC.length]).join('');
+    try{await db.ref('codes/'+nc).set({r:room.id,e:room.keys.e,by:uid,exp:Date.now()+14*864e5});await db.ref('rooms/'+room.id+'/meta/code').set(nc);return nc}catch(e){}}return null}
+async function qrSVG(text){try{if(typeof qrcode==='undefined')await js('vendor/qrcode.js');const q=qrcode(0,'M');q.addData(text);q.make();return q.createSvgTag({cellSize:4,margin:2,scalable:true})}catch(e){return ''}}
+async function askCode(){const v=await ask('수업 코드로 들어가기',{sub:'선생님이나 조장이 알려 준 6자리 코드를 적어 주세요',ph:'예) A7K-2P9',ok:'들어가기'});if(v)joinCode(v)}
+async function joinCode(raw){const c=String(raw||'').toUpperCase().replace(/[^A-Z0-9]/g,'');if(c.length!==6)return toast('코드는 6자리예요 · 예) A7K-2P9',{ms:3000});
+  if(!await needLogin('수업 코드로 들어가려면 구글 계정으로 로그인해 주세요.'))return;let v=null;try{v=(await db.ref('codes/'+c).once('value')).val()}catch(e){}
+  if(!v||!v.r||v.exp<Date.now())return toast('맞지 않거나 끝난 코드예요 · 다시 확인해 주세요',{ms:3500});await join(v.r,'e',v.e)}
+async function bigCode(c){const q=await qrSVG(codeURL(c));const el=document.createElement('div');el.id='codebig';
+  el.innerHTML=`<button class="cbx" aria-label="닫기">✕</button><div class="cbin"><p class="cbh">아케르나르에서 <b>코드로 들어가기</b>를 누르고 이 코드를 적어요</p><div class="cbc">${fmtCode(c)}</div><div class="cbq">${q}</div><p class="cbn"><span id="cbcnt">0</span>명 들어옴 · ${esc(One.main().title||'캔버스')}</p></div>`;
+  document.body.appendChild(el);const upd=()=>{const e=document.querySelector('#cbcnt');if(e)e.textContent=Math.max(0,Object.keys(members).length-1)};upd();const t=setInterval(()=>{if(!document.body.contains(el))return clearInterval(t);upd()},1000);
+  const close=()=>{el.remove();removeEventListener('keydown',k,true)};const k=e=>{if(e.key==='Escape'){e.stopPropagation();close()}};addEventListener('keydown',k,true);el.querySelector('.cbx').onclick=close}
 function linkOf(kind){if(!room)return '';const base=location.origin+location.pathname;if(kind==='v')return `${base}#r=${room.id}`;if(!room.keys)return '';return `${base}#r=${room.id}&${kind}=${room.keys[kind]}`}
 
 async function join(r,kind,key){if(!await needLogin('공유받은 캔버스에 들어가려면 구글 계정으로 로그인해 주세요.'))return toast('로그인하면 링크로 다시 들어올 수 있어요',{ms:3000});const n=myName()||await needName();if(!n)return;
@@ -62,7 +78,7 @@ async function start(m){stop(true);room=m.room;await connect();
     boundCv.items.sort((a,b)=>(a.z||0)-(b.z||0));try{A().render()}catch(e){}if(pushN&&ls)toast(`연결이 끊긴 동안 고친 ${pushN}곳을 합쳤어요`,{ms:3000})}catch(e){console.warn(e);last=snapshot(boundCv)}
   COLS.forEach(k=>{const ref=roomRef.child(k);
     ref.on('child_added',s=>remote(k,s.key,s.val()));ref.on('child_changed',s=>remote(k,s.key,s.val()));ref.on('child_removed',s=>remote(k,s.key,null))});
-  alive=true;roomRef.child('meta').on('value',s=>{const v=s.val();if(!v){alive=false;rmQ=[];if(room)ended();return}const m=One.main();if(v.title&&v.title!==m.title&&room.role!=='owner'){m.title=v.title;touch(m);const t=document.querySelector('#otitle');if(t&&document.activeElement!==t)t.textContent=v.title}});
+  alive=true;roomRef.child('meta').on('value',s=>{const v=s.val();try{window.dispatchEvent(new CustomEvent('ach-meta',{detail:v||null}))}catch(e){}if(!v){alive=false;rmQ=[];if(room)ended();return}const m=One.main();if(v.title&&v.title!==m.title&&room.role!=='owner'){m.title=v.title;touch(m);const t=document.querySelector('#otitle');if(t&&document.activeElement!==t)t.textContent=v.title}});
   roomRef.child('members').on('value',s=>{members=s.val()||{};ui()});
   pres=roomRef.child('presence/'+uid);pres.onDisconnect().remove();pres.set({n:myName(),c:colorOf(uid),t:Date.now()});
   roomRef.child('presence').on('value',s=>{const v=s.val()||{};delete v[uid];peers=v;drawCursors();ui()});
@@ -70,12 +86,12 @@ async function start(m){stop(true);room=m.room;await connect();
   if(!window.__achConn){window.__achConn=1;let was=true;db.ref('.info/connected').on('value',s=>{const on=!!s.val();let b=document.querySelector('#achoff');if(!b){b=document.createElement('div');b.id='achoff';document.body.appendChild(b)}
     b.hidden=on||!room;b.textContent='오프라인 · 계속 써도 돼요. 다시 연결되면 자동으로 합쳐져요';if(on&&!was&&room)toast('다시 연결됐어요 · 바뀐 내용을 합쳤어요',{ms:2200});was=on})}
   document.body.classList.toggle('ach-ro',!canEdit());document.body.classList.add('ach-room');roObs();ui();Cm.refresh()}
-function stop(quiet){clearInterval(tick);tick=0;Chat.unbindRoom();if(roomRef){COLS.forEach(k=>roomRef.child(k).off());['meta','members','presence','chat'].forEach(k=>roomRef.child(k).off())}
+function stop(quiet){try{window.dispatchEvent(new CustomEvent('ach-meta',{detail:null}))}catch(e){}clearInterval(tick);tick=0;Chat.unbindRoom();if(roomRef){COLS.forEach(k=>roomRef.child(k).off());['meta','members','presence','chat'].forEach(k=>roomRef.child(k).off())}
   if(pres){try{pres.remove()}catch(e){}}pres=null;roomRef=null;room=null;peers={};members={};boundCv=null;drawCursors();document.body.classList.remove('ach-ro','ach-room');ui();if(!quiet)Cm.refresh()}
 function ended(){const m=One.main();m.room=null;touch(m);stop();toast('공유가 끝났어요 · 지금 내용은 내 캔버스로 남아 있어요',{ms:4000})}
 function leave(){const m=One.main();m.room=null;touch(m);flush();stop();toast('공유 캔버스에서 나왔어요 · 내용은 이 기기에 남아 있어요')}
 async function endShare(){if(!room||room.role!=='owner')return;const ok=await confirmDlg('공유를 끝낼까요?','링크로 들어온 사람들은 더 이상 이 캔버스를 볼 수 없어요. 내 캔버스 내용은 그대로 남아요.','공유 끝내기');if(!ok)return;
-  const r=room.id;const m0=One.main();m0.room=null;touch(m0);stop(true);try{await db.ref().update({['rooms/'+r]:null,['keys/'+r]:null})}catch(e){console.warn(e);return toast('공유를 끝내지 못했어요')}flush();Cm.refresh();closeModal();toast('공유를 끝냈어요')}
+  const r=room.id;let cdel=null;try{cdel=(await db.ref('rooms/'+r+'/meta/code').once('value')).val()}catch(e){}const m0=One.main();m0.room=null;touch(m0);stop(true);try{if(cdel)await db.ref('codes/'+cdel).remove().catch(()=>{});await db.ref().update({['rooms/'+r]:null,['keys/'+r]:null})}catch(e){console.warn(e);return toast('공유를 끝내지 못했어요')}flush();Cm.refresh();closeModal();toast('공유를 끝냈어요')}
 
 /* ---------- 원격 → 내 화면 ---------- */
 function editingId(){const a=document.activeElement;const c=a&&a.closest&&a.closest('.card');return c?c.dataset.id:null}
@@ -93,7 +109,7 @@ function schedule(){if(pendRender)return;pendRender=requestAnimationFrame(()=>{p
 function loop(){if(!room||document.hidden)return;
   if(A().C()!==boundCv){const m=One.main();if(m.room)m.room=null;touch(m);stop();toast('다른 캔버스를 열어서 공유 캔버스에서 나왔어요',{ms:3000});return}
   let cur=snapshot(boundCv);const up={};let bad=false;
-  if(canEdit()){const b0=last.items||{};let st=false;boundCv.items.forEach(it=>{const j=cur.items[it.id];if(j===b0[it.id])return;const now=Date.now();if(!it.by&&!(it.id in b0)){it.by=uid;it.byn=myName()}
+  if(canEdit()){const b0=last.items||{};let st=false;boundCv.items.forEach(it=>{const j=cur.items[it.id];if(j===b0[it.id])return;const now=Date.now();if(!it.by&&!(it.id in b0)){it.by=uid;it.byn=myName();it.bt=now}
     if(it.eb!==uid||!it.et||now-it.et>30000){it.cx=it.cx||{};it.cx[uid]=(it.cx[uid]||0)+1;if(!it.cn)it.cn={};it.cn[uid]=myName()}it.eb=uid;it.ebn=myName();it.et=now;st=true});if(st)cur=snapshot(boundCv)}
   COLS.forEach(k=>{const a=cur[k],b=last[k]||{};const allowed=EDIT.includes(k)?canEdit():canComment();
     for(const id in a)if(a[id]!==b[id]){if(allowed)up[k+'/'+id]=a[id];else bad=true}
@@ -127,19 +143,19 @@ async function open(){
   if(!room){const ok=await confirmDlg('이 캔버스를 공유할까요?','링크를 받은 사람과 같이 보고 쓸 수 있어요. 사진·영상 파일은 아직 공유되지 않고, 내 기기에서만 보여요.','공유 링크 만들기');if(!ok)return;const r=await create();if(!r)return}
   const row=(k,t,d)=>`<div class="shr"><div><b>${t}</b><small>${d}</small></div><input class="inp" readonly value="${esc(linkOf(k))}"><button class="btn" data-cp="${k}">복사</button></div>`;
   const ppl=Object.entries(members).map(([u,p])=>`<li><span class="av" style="--ac:${p.c||colorOf(u)}">${esc((p.n||'?').slice(0,1))}</span>${esc(p.n||'손님')}${u===uid?' (나)':''}<em>${ROLE[p.r]||''}</em>${peers[u]||u===uid?'<i class="onl" title="접속 중"></i>':''}</li>`).join('');
-  const owner=room.role==='owner';
-  modal({title:'공유',cls:'mid',html:`${owner?`${row('v','보기만','내용을 볼 수만 있어요')}${row('c','댓글 가능','보면서 댓글을 달 수 있어요')}${row('e','편집 가능','같이 고치고 만들 수 있어요')}`:`<p class="note" style="margin:0 0 12px">나는 <b>${ROLE[room.role]}</b>(으)로 들어와 있어요.</p>${row('v','보기 링크','다른 사람에게 보여 줄 때')}`}
+  const owner=room.role==='owner';const cd=owner?await ensureCode():null;const qr=cd?await qrSVG(codeURL(cd)):'';
+  modal({title:'공유',cls:'mid',html:`${cd?`<div class="shcode"><div class="shq">${qr}</div><div class="shcd"><small>수업 코드 · 편집 가능</small><b>${fmtCode(cd)}</b><p class="note">조원은 <b>코드로 들어가기</b>에 이 코드를 적거나 QR을 찍으면 바로 같이 써요.</p><button class="btn pr" data-big>크게 보기 (칠판·TV)</button></div></div>`:''}${owner?`${row('v','보기만','내용을 볼 수만 있어요')}${row('c','댓글 가능','보면서 댓글을 달 수 있어요')}${row('e','편집 가능','같이 고치고 만들 수 있어요')}`:`<p class="note" style="margin:0 0 12px">나는 <b>${ROLE[room.role]}</b>(으)로 들어와 있어요.</p>${row('v','보기 링크','다른 사람에게 보여 줄 때')}`}
     <h4 class="shh">같이 있는 사람</h4><ul class="shpl">${ppl||'<li class="note">아직 아무도 없어요</li>'}</ul>
     <div class="shf"><span class="note">이름: <b>${esc(myName())}</b> <button class="lnk" data-nm>바꾸기</button></span>${owner?'<button class="btn dang" data-end>공유 끝내기</button>':'<button class="btn" data-leave>나가기</button>'}</div>`,
    onOpen:()=>{const b=document.querySelector('#mbody');b.querySelectorAll('[data-cp]').forEach(x=>x.onclick=()=>{const v=linkOf(x.dataset.cp);(navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(()=>toast('링크를 복사했어요'),()=>{x.previousElementSibling.select();document.execCommand('copy');toast('링크를 복사했어요')})});
-     b.querySelectorAll('[data-gc]').forEach(x=>x.onclick=()=>classroom(linkOf(x.dataset.gc)));b.querySelector('[data-end]')?.addEventListener('click',endShare);b.querySelector('[data-leave]')?.addEventListener('click',()=>{closeModal();leave()});
+     b.querySelectorAll('[data-gc]').forEach(x=>x.onclick=()=>classroom(linkOf(x.dataset.gc)));b.querySelector('[data-end]')?.addEventListener('click',endShare);b.querySelector('[data-big]')?.addEventListener('click',()=>{closeModal();bigCode(cd)});b.querySelector('[data-leave]')?.addEventListener('click',()=>{closeModal();leave()});
      b.querySelector('[data-nm]')?.addEventListener('click',async()=>{const n=(await ask('이름 바꾸기',{val:myName(),ok:'바꾸기'})||'').trim().slice(0,20);if(!n)return;setName(n);if(room){roomRef.child('members/'+uid+'/n').set(n).catch(()=>{});pres&&pres.update({n})}ui();toast('이름을 바꿨어요')})}})}
 
 const CRI='<svg viewBox="0 0 24 24" width="16" height="16"><rect x="2.5" y="4" width="19" height="15" rx="2" fill="#0F9D58"/><rect x="5" y="6.5" width="14" height="10" rx="1" fill="#57BB8A"/><circle cx="12" cy="10.2" r="1.7" fill="#fff"/><path d="M8.6 15c.5-1.8 1.8-2.7 3.4-2.7s2.9.9 3.4 2.7z" fill="#fff"/><rect x="13" y="17.2" width="5" height="1.4" rx=".7" fill="#fff"/></svg>';
 function classroom(url){if(!url)return toast('먼저 공유 링크를 만들어 주세요');const w=open('https://classroom.google.com/share?url='+encodeURIComponent(url),'_blank','width=640,height=720,noopener');if(!w)toast('팝업이 막혔어요 · 주소창 오른쪽에서 팝업을 허용해 주세요',{ms:3500})}
 async function toClassroom(){if(!room){const ok=await confirmDlg('클래스룸에 올릴까요?','캔버스를 공유 링크로 만든 뒤 클래스룸 과제·자료·공지로 올려요. 기본으로 ‘댓글 가능’ 링크를 올려요.','공유하고 올리기');if(!ok)return;const r=await create();if(!r)return}
   if(room.role!=='owner')return classroom(linkOf('v'));classroom(linkOf('c'))}
-function moreMenu(){return[{t:'공유 · 같이 쓰기',i:'user',fn:open},...(room?[{t:'조원 기여도',i:'chart',fn:contrib}]:[]),...(isG()?[{t:'내 공유 캔버스',i:'page',fn:myRooms},{t:'로그아웃',i:'back',fn:signOut},{t:'계정 삭제',i:'trash',fn:deleteAccount}]:[{t:'구글로 로그인',i:'user',fn:signIn}])]}
+function moreMenu(){return[{t:'공유 · 같이 쓰기',i:'user',fn:open},{t:'코드로 들어가기',i:'link',fn:askCode},...(room?[{t:'조원 기여도',i:'chart',fn:contrib}]:[]),...(isG()?[{t:'내 공유 캔버스',i:'page',fn:myRooms},{t:'로그아웃',i:'back',fn:signOut},{t:'계정 삭제',i:'trash',fn:deleteAccount}]:[{t:'구글로 로그인',i:'user',fn:signIn}])]}
 /* ---------- 조원 기여도 ---------- */
 function contrib(){const c=A().C();if(!c)return;const P={};const who=(u,n)=>P[u]||(P[u]={n:n||'이름 없음',made:0,chars:0,edits:0,cm:0,chat:0});
   Object.entries(members).forEach(([u,p])=>who(u,p.n));
@@ -311,9 +327,10 @@ async function boot(){let tries=0;while((!document.querySelector('#obar')||typeo
   let wasG=false;try{wasG=localStorage.getItem('ach-g')==='1'}catch(e){}if(wasG){try{await connect();if(isG()){Chat.bindUser();try{db.ref('profiles/'+uid).update({n:myName(),at:Date.now()})}catch(e){}}acct()}catch(e){console.warn(e)}}
   const h=new URLSearchParams(location.hash.slice(1)),r=h.get('r');
   if(r){const kind=h.get('e')?'e':h.get('c')?'c':'v';await join(r,kind,h.get(kind)||null);return}
+  if(h.get('k')){const k0=h.get('k');history.replaceState(null,'',location.pathname+location.search);await joinCode(k0);return}
   const m=One.main();if(m&&m.room&&m.room.id){try{await connect()}catch(e){}if(isG()){try{await start(m)}catch(e){console.warn(e);toast('공유 캔버스에 다시 연결하지 못했어요',{ms:3000})}}else toast('공유 캔버스와 다시 연결하려면 로그인해 주세요',{ms:6000,act:'로그인',fn:async()=>{if(await signIn())start(One.main()).catch(()=>{})}})}
   Cm.refresh()}
-addEventListener('hashchange',()=>{const h=new URLSearchParams(location.hash.slice(1));if(h.get('r')&&(!room||room.id!==h.get('r')))boot()});
+addEventListener('hashchange',()=>{const h=new URLSearchParams(location.hash.slice(1));if(h.get('k')){const k0=h.get('k');history.replaceState(null,'',location.pathname+location.search);joinCode(k0);return}if(h.get('r')&&(!room||room.id!==h.get('r')))boot()});
 if(document.readyState==='loading')addEventListener('DOMContentLoaded',()=>setTimeout(boot,300));else setTimeout(boot,300);
-return {fb:()=>({db,uid:isG()?uid:null,fb}),connect,contrib,cloud:async why=>{if(!await needLogin(why))return null;return {db,uid,name:myName()}},open,join,leave,cardMenu,moreMenu,signIn,signOut,deleteAccount,myRooms,chat:Chat,classroom:toClassroom,comments:Cm,state:()=>({room,uid,peers,members}),_last:()=>last};
+return {setMeta:async o=>{if(!room||room.role!=='owner'||!roomRef)return false;try{await roomRef.child('meta').update(o);return true}catch(e){return false}},name:()=>myName(),askCode,joinCode,fb:()=>({db,uid:isG()?uid:null,fb}),connect,contrib,cloud:async why=>{if(!await needLogin(why))return null;return {db,uid,name:myName()}},open,join,leave,cardMenu,moreMenu,signIn,signOut,deleteAccount,myRooms,chat:Chat,classroom:toClassroom,comments:Cm,state:()=>({room,uid,peers,members}),_last:()=>last};
 })();

@@ -7,7 +7,7 @@ function box(it){return A().box(it.id)||{x:it.x,y:it.y,w:it.w||200,h:it.h||100}}
 function inFrame(it,f){const b=box(it),c=box(f);const cx=b.x+b.w/2,cy=b.y+b.h/2;return cx>c.x&&cx<c.x+c.w&&cy>c.y&&cy<c.y+c.h}
 function hostOf(u){try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){return ''}}
 /* 참고 자료 */
-function refs(){const c=A().C();return (c.items||[]).filter(i=>i.type==='link'&&i.url).sort(byPos).map(i=>({t:strip(i.title)||hostOf(i.url),u:i.url,h:hostOf(i.url),d:i.at||i.ct||Date.now()}))}
+function refs(){const c=A().C();const L=(c.items||[]).filter(i=>i.type==='link'&&i.url).sort(byPos).map(i=>({t:strip(i.title)||hostOf(i.url),u:i.url,h:hostOf(i.url),d:i.at||i.ct||Date.now()}));if(typeof Src!=='undefined')Src.webRefs().forEach(r=>{if(!L.some(x=>x.u===r.u))L.push(r)});return L}
 function refsHTML(list){return list.length?`<ol>${list.map(r=>`<li>${esc(r.t)}. ${esc(r.h)}. <span style="color:#555">${esc(r.u)}</span> (${new Date(r.d).toLocaleDateString('ko-KR')} 확인)</li>`).join('')}</ol>`:''}
 function makeRefs(){const L=refs();if(!L.length)return toast('링크 카드가 없어요 · 자료 주소를 캔버스에 붙여 넣으면 링크 카드가 돼요',{ms:3200});const a=A();a.push();const[x,y]=a.center();const n=a.mk('doc',x-300,y-160,{w:600,text:`<h2>참고 자료</h2>${refsHTML(L)}`});a.render();a.setSel([n.id]);a.save();toast(`링크 ${L.length}개로 참고 자료 문서를 만들었어요`)}
 /* 마인드맵 → 목록 */
@@ -33,6 +33,7 @@ async function build(opt){const c=A().C(),m=One.main();const items=(c.items||[])
     const rest=items.filter(i=>!skip(i)&&!frames.some(f=>inFrame(i,f))&&!(c.items.filter(x=>x.slide).some(s=>inFrame(i,s)))).sort(byPos);let body='';for(const it of rest)body+=await cardHTML(it,c,used);if(body.trim())sec+=`<section><h2>그 밖의 메모</h2>${body}</section>`;
     if(sec)html+=docs.length?`<h2 class="ap">부록 · 캔버스 정리</h2>${sec}`:sec}
   if(opt.refs!==false){const L=refs();if(L.length)html+=`<section><h2>참고 자료</h2>${refsHTML(L)}</section>`}
+  if(typeof Src!=='undefined'){const R=Src.rows();if(R.length)html+=`<section><h2>AI 활용 내역</h2>${Src.tableHTML(R)}</section>`}
   return html}
 const CSS=`@page{size:A4;margin:20mm 18mm}body{font:11pt/1.75 "Malgun Gothic","Noto Sans KR",sans-serif;color:#111;margin:0}h1{font-size:22pt;margin:0 0 6px}h2{font-size:14pt;margin:22px 0 8px;padding-bottom:4px;border-bottom:1px solid #ccc}h3{font-size:12pt}.cover{text-align:center;padding:50px 0 30px;border-bottom:2px solid #141C33;margin-bottom:24px}.cover p{color:#555}
 table{border-collapse:collapse;width:100%;margin:8px 0}th,td{border:1px solid #999;padding:5px 8px;text-align:left;font-size:10pt}th{background:#eee}figure{margin:10px 0;text-align:center;page-break-inside:avoid}figure img{max-width:100%;max-height:110mm}figcaption{font-size:9pt;color:#555}pre{background:#f4f4f4;padding:8px;font-size:9pt;white-space:pre-wrap}ul.chk{list-style:none;padding-left:4px}section{page-break-inside:auto}.ap{margin-top:36px}.doc h1{font-size:18pt}`;
