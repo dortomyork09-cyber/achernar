@@ -54,3 +54,10 @@
 - 수업 도구: class.js(구역·잠금·타이머·내 생각 먼저), src.js(출처 표시·AI 내역표), tl.js(타임랩스), share.js(폰 공유·수집함). 방 메타(rooms/r/meta)는 조장만 쓸 수 있어서 조장 전용 설정은 meta에 둔다.
 - 서비스 워커는 https에서만 등록된다. 로컬 테스트는 배포 폴더를 띄우고 직접 register 해야 함.
 - 폰·태블릿(1100px 이하)에서는 아래 막대가 가로 스크롤 + '더 보기' 고정. 새 막대 UI는 좁은 화면에서 넘치는지 꼭 볼 것.
+
+## v25 (2026-11-22) 개인정보처리방침 + 만 14세 확인
+- privacy.html 추가. 보호책임자 성명·문의 이메일은 '준비 중' — 사용자가 알려주면 채우기 (개인 gmail은 절대 넣지 말 것).
+- 로그인 전 동의 창(collab.js consent). localStorage 'ach-consent'=CV. CV 바꾸면 모두 다시 동의.
+- 이미 로그인한 사람은 acct()에서 recheck → 거절 시 조용히 로그아웃.
+- RTDB users/$uid/consent {a14:true,v,at} — 규칙 바뀜, 콘솔에 다시 붙여넣기 필요.
+- 실수 기록: 테스트 스크립트에서 Playwright Python에 .then 쓰면 안 됨.

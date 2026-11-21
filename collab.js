@@ -20,7 +20,7 @@ async function connect(){if(db)return;
   if(window.__FBMOCK){fb=window.__FBMOCK}else{if(!window.firebase){await js('vendor/firebase-app-compat.js');await js('vendor/firebase-auth-compat.js');await js('vendor/firebase-database-compat.js')}fb=window.firebase;if(!fb.apps.length)fb.initializeApp(CFG)}
   const au=fb.auth();await new Promise(r=>{const un=au.onAuthStateChanged(()=>{try{un()}catch(e){}r()})});uid=au.currentUser?au.currentUser.uid:null;db=fb.database()}
 function needLogin(why){return new Promise(async res=>{try{await connect()}catch(e){toast('서버에 연결하지 못했어요. 인터넷을 확인해 주세요');return res(false)}if(isG())return res(true);let done=false;
-  modal({title:'구글로 로그인해 주세요',cls:'mid',html:`<p class="note" style="margin:0 0 14px;line-height:1.6">${why||'같이 쓰기·채팅·댓글은 구글 계정으로 로그인해야 쓸 수 있어요.'}<br>로그인하면 캔버스가 다른 기기에서도 이어져요. 로그인 없이도 이 기기에서는 그대로 쓸 수 있어요.</p><button class="btn pr glog" data-g><svg viewBox="0 0 24 24" width="18" height="18"><path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.6 3.8-5.5 3.8-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.2 14.6 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12s4.4 9.8 9.8 9.8c5.7 0 9.4-4 9.4-9.6 0-.6-.1-1.1-.2-1.6H12z"/></svg>구글로 로그인</button><p class="note" style="margin:12px 0 0;font-size:12px">학교 계정이 막혀 있으면 개인 구글 계정으로 로그인해 주세요.</p>`,
+  modal({title:'구글로 로그인해 주세요',cls:'mid',html:`<p class="note" style="margin:0 0 14px;line-height:1.6">${why||'같이 쓰기·채팅·댓글은 구글 계정으로 로그인해야 쓸 수 있어요.'}<br>로그인하면 캔버스가 다른 기기에서도 이어져요. 로그인 없이도 이 기기에서는 그대로 쓸 수 있어요. (만 14세 이상 · <a href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a>)</p><button class="btn pr glog" data-g><svg viewBox="0 0 24 24" width="18" height="18"><path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.6 3.8-5.5 3.8-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.2 14.6 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12s4.4 9.8 9.8 9.8c5.7 0 9.4-4 9.4-9.6 0-.6-.1-1.1-.2-1.6H12z"/></svg>구글로 로그인</button><p class="note" style="margin:12px 0 0;font-size:12px">학교 계정이 막혀 있으면 개인 구글 계정으로 로그인해 주세요.</p>`,
    onOpen:()=>{const b=document.querySelector('#mbody [data-g]');b.onclick=async()=>{const ok=await signIn();if(ok){done=true;closeModal();res(true)}}},onClose:()=>{if(!done)res(false)}})})}
 
 /* ---------- 직렬화 ---------- */
@@ -155,7 +155,7 @@ const CRI='<svg viewBox="0 0 24 24" width="16" height="16"><rect x="2.5" y="4" w
 function classroom(url){if(!url)return toast('먼저 공유 링크를 만들어 주세요');const w=open('https://classroom.google.com/share?url='+encodeURIComponent(url),'_blank','width=640,height=720,noopener');if(!w)toast('팝업이 막혔어요 · 주소창 오른쪽에서 팝업을 허용해 주세요',{ms:3500})}
 async function toClassroom(){if(!room){const ok=await confirmDlg('클래스룸에 올릴까요?','캔버스를 공유 링크로 만든 뒤 클래스룸 과제·자료·공지로 올려요. 기본으로 ‘댓글 가능’ 링크를 올려요.','공유하고 올리기');if(!ok)return;const r=await create();if(!r)return}
   if(room.role!=='owner')return classroom(linkOf('v'));classroom(linkOf('c'))}
-function moreMenu(){return[{t:'공유 · 같이 쓰기',i:'user',fn:open},{t:'코드로 들어가기',i:'link',fn:askCode},...(room?[{t:'조원 기여도',i:'chart',fn:contrib}]:[]),...(isG()?[{t:'내 공유 캔버스',i:'page',fn:myRooms},{t:'로그아웃',i:'back',fn:signOut},{t:'계정 삭제',i:'trash',fn:deleteAccount}]:[{t:'구글로 로그인',i:'user',fn:signIn}])]}
+function moreMenu(){return[{t:'공유 · 같이 쓰기',i:'user',fn:open},{t:'코드로 들어가기',i:'link',fn:askCode},...(room?[{t:'조원 기여도',i:'chart',fn:contrib}]:[]),...(isG()?[{t:'내 공유 캔버스',i:'page',fn:myRooms},{t:'로그아웃',i:'back',fn:signOut},{t:'계정 삭제',i:'trash',fn:deleteAccount}]:[{t:'구글로 로그인',i:'user',fn:signIn}]),{t:'개인정보처리방침',i:'page',fn:()=>window.open('privacy.html','_blank','noopener')}]}
 /* ---------- 조원 기여도 ---------- */
 function contrib(){const c=A().C();if(!c)return;const P={};const who=(u,n)=>P[u]||(P[u]={n:n||'이름 없음',made:0,chars:0,edits:0,cm:0,chat:0});
   Object.entries(members).forEach(([u,p])=>who(u,p.n));
@@ -223,7 +223,19 @@ const isG=()=>{const u=fb&&fb.auth().currentUser;return !!(u&&!u.isAnonymous)};
 function gInfo(){const u=fb&&fb.auth().currentUser;return u&&!u.isAnonymous?{g:true,p:u.photoURL||''}:{}}
 function remember(r,title,role,keys){if(!db||!uid)return;db.ref('users/'+uid+'/rooms/'+r).set({t:title||'',r:role,at:Date.now(),...(keys?{k:keys}:{})}).catch(()=>{})}
 async function myRoom(r){try{return (await db.ref('users/'+uid+'/rooms/'+r).once('value')).val()}catch(e){return null}}
-async function signIn(){try{await connect()}catch(e){toast('서버에 연결하지 못했어요');return false}
+/* ---------- 로그인 전 확인: 만 14세 이상 + 개인정보처리방침 동의 ---------- */
+const CV='2026-11-22';const CK='ach-consent';
+const agreed=()=>{try{return localStorage.getItem(CK)===CV}catch(e){return false}};
+function consent(){if(agreed())return Promise.resolve(true);return new Promise(res=>{let done=false;const fin=v=>{if(done)return;done=true;res(v)};
+  modal({title:'로그인하기 전에',cls:'mid',html:`<p class="note" style="margin:0 0 12px">로그인하면 이름·이메일과 공유·기기 간 저장에 필요한 캔버스 내용을 Google Firebase에 보관해요.</p>
+    <label class="cgk"><input type="checkbox" id="cg14"> <span><b>만 14세 이상</b>이에요</span></label>
+    <label class="cgk"><input type="checkbox" id="cgpp"> <span><a href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a>을 읽었고 동의해요 <small>(국외 이전 포함)</small></span></label>
+    <p class="note" style="margin:12px 0 0">만 14세 미만이면 로그인 없이 이 기기에서만 쓸 수 있어요. 공유·댓글·기기 간 저장은 쓸 수 없어요.</p>`,
+    btns:[{t:'만 14세 미만이에요',fn:()=>{toast('로그인 없이 이 기기에서 그대로 쓸 수 있어요',{ms:3000});fin(false)}},{t:'동의하고 로그인',cls:'pr',fn:()=>{const a=document.querySelector('#cg14')?.checked,b=document.querySelector('#cgpp')?.checked;if(!a||!b){toast('두 가지 모두 확인해 주세요');return false}try{localStorage.setItem(CK,CV)}catch(e){}fin(true)}}],
+    onClose:()=>fin(false)})})}
+function saveConsent(){try{if(db&&uid&&isG())db.ref('users/'+uid+'/consent').set({a14:true,v:CV,at:Date.now()}).catch(()=>{})}catch(e){}}
+let rcOn=false;async function recheck(){if(!isG()||agreed()||rcOn)return;rcOn=true;try{const ok=await consent();if(ok)saveConsent();else{await signOut(true);toast('로그아웃했어요 · 이 기기에서는 계속 쓸 수 있어요',{ms:3200})}}finally{rcOn=false}}
+async function signIn(){if(!await consent())return false;try{await connect()}catch(e){toast('서버에 연결하지 못했어요');return false}
   const au=fb.auth(),prov=new fb.auth.GoogleAuthProvider();prov.setCustomParameters({prompt:'select_account'});const before=uid;
   try{if(au.currentUser&&au.currentUser.isAnonymous)await au.currentUser.linkWithPopup(prov);else await au.signInWithPopup(prov)}
   catch(e){if(e.code==='auth/credential-already-in-use'&&e.credential){try{await au.signInWithCredential(e.credential)}catch(e2){console.warn(e2);toast('로그인하지 못했어요');return false}}
@@ -236,15 +248,15 @@ async function signIn(){try{await connect()}catch(e){toast('서버에 연결하�
   db.ref('profiles/'+uid).set({n:myName(),p:u.photoURL||'',at:Date.now()}).catch(()=>{});
   const m=One.main();if(before&&before!==uid&&m.room){const r=m.room;stop(true);if(r.role==='owner'){m.room=null;touch(m);toast('다른 계정으로 바뀌어 원래 공유와 연결이 끊겼어요',{ms:4000})}else{await join(r.id,r.k?Object.keys(r.k)[0]:'v',r.k?Object.values(r.k)[0]:null)}}
   else if(room){roomRef.child('members/'+uid).update({n:myName(),...gInfo()}).catch(()=>{});pres&&pres.update({n:myName()})}
-  Chat.bindUser();acct();toast(`${myName()}님, 로그인했어요`);const mm=One.main();if(mm&&mm.room&&!room){start(mm).catch(e=>console.warn(e))}return true}
-async function signOut(){const ok=await confirmDlg('로그아웃할까요?','이 기기에서 구글 계정 연결이 끊겨요. 캔버스 내용은 그대로 남아요.','로그아웃');if(!ok)return;
+  Chat.bindUser();acct();toast(`${myName()}님, 로그인했어요`);saveConsent();const mm=One.main();if(mm&&mm.room&&!room){start(mm).catch(e=>console.warn(e))}return true}
+async function signOut(quiet){const ok=quiet===true||await confirmDlg('로그아웃할까요?','이 기기에서 구글 계정 연결이 끊겨요. 캔버스 내용은 그대로 남아요.','로그아웃');if(!ok)return;
   const m=One.main();if(m.room){m.room=null;touch(m)}stop(true);Chat.unbindUser();try{await fb.auth().signOut();localStorage.removeItem('ach-g')}catch(e){}uid=null;acct();toast('로그아웃했어요')}
 async function myRooms(){try{await connect()}catch(e){return toast('서버에 연결하지 못했어요')}
   let v={};try{v=(await db.ref('users/'+uid+'/rooms').once('value')).val()||{}}catch(e){}
   const list=Object.entries(v).sort((a,b)=>(b[1].at||0)-(a[1].at||0));
   modal({title:'내 공유 캔버스',cls:'mid',html:list.length?`<ul class="myr">${list.map(([r,x])=>`<li><button data-r="${r}"><b>${esc(x.t||'캔버스')}</b><small>${ROLE[x.r]||''} · ${new Date(x.at||0).toLocaleDateString()}</small></button></li>`).join('')}</ul>`:'<p class="note">아직 공유하거나 들어간 캔버스가 없어요</p>',
     onOpen:()=>document.querySelectorAll('#mbody [data-r]').forEach(b=>b.onclick=()=>{closeModal();const x=v[b.dataset.r];const k=x.k&&x.r!=='owner'?Object.entries(x.k)[0]:null;join(b.dataset.r,k?k[0]:'v',k?k[1]:null)})})}
-function acct(){try{const g=isG();window.dispatchEvent(new CustomEvent('ach-auth',{detail:{uid:g?uid:null}}))}catch(e){}document.body.classList.toggle('nologin',!isG());const b=document.querySelector('#achacct');if(!b)return;const u=fb&&fb.auth().currentUser;
+function acct(){try{if(isG()&&!agreed())setTimeout(recheck,300)}catch(e){}try{const g=isG();window.dispatchEvent(new CustomEvent('ach-auth',{detail:{uid:g?uid:null}}))}catch(e){}document.body.classList.toggle('nologin',!isG());const b=document.querySelector('#achacct');if(!b)return;const u=fb&&fb.auth().currentUser;
   if(u&&!u.isAnonymous){b.innerHTML=u.photoURL?`<img src="${esc(u.photoURL)}" alt="" referrerpolicy="no-referrer">`:`<span class="av" style="--ac:${colorOf(uid)}">${esc(myName().slice(0,1))}</span>`;b.title=`${u.displayName||''} ${u.email||''}`;b.classList.add('on')}
   else{b.innerHTML='<span>로그인</span>';b.title='구글 계정으로 로그인';b.classList.remove('on')}
   Chat.fab()}
@@ -332,5 +344,5 @@ async function boot(){let tries=0;while((!document.querySelector('#obar')||typeo
   Cm.refresh()}
 addEventListener('hashchange',()=>{const h=new URLSearchParams(location.hash.slice(1));if(h.get('k')){const k0=h.get('k');history.replaceState(null,'',location.pathname+location.search);joinCode(k0);return}if(h.get('r')&&(!room||room.id!==h.get('r')))boot()});
 if(document.readyState==='loading')addEventListener('DOMContentLoaded',()=>setTimeout(boot,300));else setTimeout(boot,300);
-return {setMeta:async o=>{if(!room||room.role!=='owner'||!roomRef)return false;try{await roomRef.child('meta').update(o);return true}catch(e){return false}},name:()=>myName(),askCode,joinCode,fb:()=>({db,uid:isG()?uid:null,fb}),connect,contrib,cloud:async why=>{if(!await needLogin(why))return null;return {db,uid,name:myName()}},open,join,leave,cardMenu,moreMenu,signIn,signOut,deleteAccount,myRooms,chat:Chat,classroom:toClassroom,comments:Cm,state:()=>({room,uid,peers,members}),_last:()=>last};
+return {_recheck:()=>recheck(),setMeta:async o=>{if(!room||room.role!=='owner'||!roomRef)return false;try{await roomRef.child('meta').update(o);return true}catch(e){return false}},name:()=>myName(),askCode,joinCode,fb:()=>({db,uid:isG()?uid:null,fb}),connect,contrib,cloud:async why=>{if(!await needLogin(why))return null;return {db,uid,name:myName()}},open,join,leave,cardMenu,moreMenu,signIn,signOut,deleteAccount,myRooms,chat:Chat,classroom:toClassroom,comments:Cm,state:()=>({room,uid,peers,members}),_last:()=>last};
 })();

@@ -73,6 +73,10 @@
           "$pair": {
             ".write": "auth != null && auth.provider !== 'anonymous' && (auth.uid === $uid || ($pair.beginsWith(auth.uid+'_') || $pair.endsWith('_'+auth.uid)))"
           }
+        },
+        "consent": {
+          ".write": "auth != null && auth.provider !== 'anonymous' && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['a14','v','at']) && newData.child('a14').val() === true"
         }
       }
     },
