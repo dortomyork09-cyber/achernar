@@ -46,3 +46,7 @@
 - 클래스 이름 겹침 주의: 공유 목록의 .shp가 도형 그림 .shp에 max-height:180px를 걸어 도형이 안 늘어났음. 새 클래스는 grep으로 겹치는지 먼저 확인.
 - 옛날 '여러 페이지' 앱은 입구를 막아 둠 (One.on()은 항상 true, applySettings에서 one/simple 고정). 옛 데이터(코드·스티커·문서 카드, 없앤 배경)는 지우지 말고 보이게만 둘 것.
 - 카드 오른쪽 클릭 메뉴는 tidyMenu()가 '모양 ›', '내보내기 ›'로 묶는다. 새 항목을 넣을 땐 어느 묶음인지 정할 것.
+- 전역 함수 이름(uid, esc, now 등)을 모듈 안 변수 이름으로 쓰지 말 것 (cloud.js에서 uid 변수가 uid()를 가릴 뻔했음).
+- 빈 contenteditable에 display:flex를 주면 크롬에서 커서가 안 들어가 글을 못 씀. 가운데 정렬은 바깥 칸에서.
+- 캔버스 카드는 한 번 클릭하면 글쓰기로 들어간다. 클릭에 다른 동작을 붙이는 카드는 pointerdown의 ed 결정에서 빼야 함.
+- 기기 간 저장은 cloud.js (cloud/uid/{main,idx,cv,bl}). 규칙을 바꾸면 database.rules.json을 사용자가 콘솔에 다시 붙여넣어야 함.

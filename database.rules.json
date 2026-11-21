@@ -94,6 +94,33 @@
         ".write": "auth != null && auth.provider !== 'anonymous' && ((!data.exists() && newData.child('by').val() === auth.uid) || (data.child('by').val() === auth.uid && !newData.exists()))",
         ".validate": "!newData.exists() || (newData.hasChildren(['s','t','by','cv']) && newData.child('cv').isString() && newData.child('cv').val().length < 400000 && newData.child('s').isString() && newData.child('s').val().length < 40)"
       }
+    },
+    "cloud": {
+      "$uid": {
+        ".read": "auth != null && auth.provider !== 'anonymous' && auth.uid === $uid",
+        ".write": "auth != null && auth.provider !== 'anonymous' && auth.uid === $uid",
+        "main": {
+          ".validate": "newData.isString() && newData.val().length < 64"
+        },
+        "idx": {
+          "$c": {
+            ".validate": "newData.hasChildren(['r','k'])"
+          }
+        },
+        "cv": {
+          "$c": {
+            ".validate": "newData.isString() && newData.val().length < 5000000"
+          }
+        },
+        "bl": {
+          "$b": {
+            ".validate": "newData.hasChildren(['d']) && newData.child('d').isString() && newData.child('d').val().length < 600000"
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
     }
   }
 }

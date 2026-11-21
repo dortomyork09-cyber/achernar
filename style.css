@@ -1571,3 +1571,21 @@ body:has(#vp[data-bg=board]) #toast,body:has(#vp[data-bg=night]) #toast{box-shad
 .t-shape[data-sh=chevron] .ed{left:32%;right:22%}
 .t-shape[data-sh=moon] .ed{left:8%;right:40%;top:58%}
 .t-shape[data-sh=cyl] .ed{top:60%}
+
+/* 기기 간 저장 표시 */
+.ocloud{font-size:12px;color:var(--mute);margin-left:6px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}.ocloud::before{content:'';width:6px;height:6px;border-radius:50%;background:#22A06B}.ocloud[data-k=busy]::before{background:#F59E0B}.ocloud[data-k=wait]::before,.ocloud[data-k=bad]::before{background:#A1A1AA}.ocloud[data-k=bad]{color:#B91C1C}
+
+/* 뒤집기 카드 */
+.card.t-flip{background:transparent;box-shadow:none;padding:0;perspective:1000px}
+.card.t-flip .flip{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.3,.7,.25,1)}
+.card.t-flip .flip.on{transform:rotateY(180deg)}
+.card.t-flip .fface{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:var(--cr,12px);background:var(--cb,var(--cw,#fff));box-shadow:0 0 0 1px #E4E4E7,0 6px 18px -12px rgb(0 0 0/.35);display:flex;flex-direction:column;padding:10px 14px 12px;overflow:hidden}
+.card.t-flip .fback{transform:rotateY(180deg)}
+.card.t-flip .fback::after{content:'';position:absolute;left:0;top:0;right:0;height:3px;background:#2563EB;opacity:.55}
+.card.t-flip .flab{font-size:11px;font-weight:600;color:#A1A1AA;letter-spacing:.02em}
+.card.t-flip .fface{justify-content:center}.card.t-flip .flab{position:absolute;left:14px;top:9px}.card.t-flip .fface .ed{display:block;width:100%;margin:auto 0;text-align:center;font-size:17px;line-height:1.45;overflow:auto;max-height:100%;min-height:1.45em}
+.card.t-flip .flip.on .ffront,.card.t-flip .flip:not(.on) .fback{pointer-events:none}
+.card.t-flip .fbtn{position:absolute;right:8px;bottom:8px;z-index:2;width:26px;height:26px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:7px;color:#71717A;background:rgb(255 255 255/.85);opacity:0;transition:opacity .15s}
+.card.t-flip:hover .fbtn,.card.t-flip.sel .fbtn{opacity:1}
+.card.t-flip.sel{box-shadow:none}.card.t-flip.sel .fface{box-shadow:0 0 0 2px var(--sel,#2563EB)}
+@media (prefers-reduced-motion: reduce){.card.t-flip .flip{transition:none}}
