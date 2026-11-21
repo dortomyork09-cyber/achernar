@@ -83,7 +83,7 @@ function inkToDiagram(){const ap=A(),c=ap.C();if(!c)return;const ids=ap.selK();c
 
 /* ---------- 카드 메뉴 ---------- */
 function cardMenu(its){const it=its[0],n=its.length,text=it&&!['image','video','audio','file'].includes(it.type);
-  return[...(typeof DocPPT!=='undefined'?DocPPT.cardMenu(its):[]),...World.cardMenu(its),...Mind.cardMenu(its),{t:'속성 (위치·크기·회전·투명도)',i:'settings',fn:()=>MS.props(its,1)},{t:'다른 형태로 바꾸기 (마인드맵·체크리스트·표)',i:'ai',fn:()=>morph(its)}
+  return[...(typeof DocPPT!=='undefined'?DocPPT.cardMenu(its):[]),...(typeof Collab!=='undefined'?Collab.cardMenu(its):[]),...World.cardMenu(its),...Mind.cardMenu(its),{t:'속성 (위치·크기·회전·투명도)',i:'settings',fn:()=>MS.props(its,1)},{t:'다른 형태로 바꾸기 (마인드맵·체크리스트·표)',i:'ai',fn:()=>morph(its)}
   ]}
 
 /* ---------- 분위기 모드 ---------- */

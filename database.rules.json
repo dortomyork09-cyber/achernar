@@ -1,0 +1,37 @@
+{
+  "rules": {
+    "keys": {
+      "$r": {
+        ".read": false,
+        ".write": "auth != null && ((!data.exists() && newData.hasChildren(['e','c'])) || (!newData.exists() && root.child('rooms/'+$r+'/meta/owner').val() === auth.uid))"
+      }
+    },
+    "access": {
+      "$r": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && root.child('keys/'+$r).exists() && (!newData.exists() || newData.val() === root.child('keys/'+$r+'/e').val() || newData.val() === root.child('keys/'+$r+'/c').val())"
+        }
+      }
+    },
+    "rooms": {
+      "$r": {
+        ".read": "auth != null",
+        ".write": "auth != null && data.child('meta/owner').val() === auth.uid",
+        "meta": {
+          ".write": "auth != null && ((!data.exists() && newData.child('owner').val() === auth.uid && newData.parent().parent().parent().child('keys/'+$r).exists()) || data.child('owner').val() === auth.uid)"
+        },
+        "items":   { ".write": "auth != null && root.child('keys/'+$r).exists() && (root.child('rooms/'+$r+'/meta/owner').val() === auth.uid || root.child('access/'+$r+'/'+auth.uid).val() === root.child('keys/'+$r+'/e').val())" },
+        "links":   { ".write": "auth != null && root.child('keys/'+$r).exists() && (root.child('rooms/'+$r+'/meta/owner').val() === auth.uid || root.child('access/'+$r+'/'+auth.uid).val() === root.child('keys/'+$r+'/e').val())" },
+        "strokes": { ".write": "auth != null && root.child('keys/'+$r).exists() && (root.child('rooms/'+$r+'/meta/owner').val() === auth.uid || root.child('access/'+$r+'/'+auth.uid).val() === root.child('keys/'+$r+'/e').val())" },
+        "comments": {
+          ".write": "auth != null && root.child('keys/'+$r).exists() && (root.child('rooms/'+$r+'/meta/owner').val() === auth.uid || root.child('access/'+$r+'/'+auth.uid).val() === root.child('keys/'+$r+'/e').val() || root.child('access/'+$r+'/'+auth.uid).val() === root.child('keys/'+$r+'/c').val())",
+          "$c": { ".validate": "newData.isString() && newData.val().length < 20000" }
+        },
+        "members":  { "$uid": { ".write": "auth != null && auth.uid === $uid" } },
+        "presence": { "$uid": { ".write": "auth != null && auth.uid === $uid" } },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}
