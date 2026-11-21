@@ -61,7 +61,7 @@ function cardMenu(its){const it=its[0],n=its.length;const out=[];
   if(n===1&&it.type==='link')out.push({t:'↗ 링크 열기',i:'web',fn:()=>openURL(/^[a-z]+:\/\//i.test(it.url)?it.url:'https://'+it.url)},{t:'주소 복사',i:'copy',fn:()=>{navigator.clipboard?.writeText(it.url).catch(()=>toast('복사가 막혀 있어요 · 직접 선택해서 복사하세요'));toast('복사했어요')}});
   if(n===1&&(isMind(it)||parent(it.id)||kids(it.id).length))
   if(n===1&&isMind(it)){const hasK=kids(it.id).length||it.clp;out.push({t:'🧠 마인드맵',i:'node',sub:[
-    {t:'정렬: 오른쪽으로',i:'arrow',fn:()=>layout(it,'right')},{t:'정렬: 양쪽으로',i:'layout',fn:()=>layout(it,'both')},{t:'정렬: 아래로 (조직도)',i:'down',fn:()=>layout(it,'down')},{t:'정렬: 둥글게 (방사형)',i:'node',fn:()=>layout(it,'radial')},{t:'정렬: 왼쪽으로',i:'back',fn:()=>layout(it,'left')},'-',
+    {t:'정렬: 오른쪽으로',i:'arrow',fn:()=>layout(it,'right')},{t:'정렬: 양쪽으로',i:'layout',fn:()=>layout(it,'both')},{t:'정렬: 아래로 (조직도)',i:'down',fn:()=>layout(it,'down')},'-',
     ...(hasK?[{t:it.clp?'가지 펼치기':'가지 접기',i:'toggle',fn:()=>fold(it)},{t:'가지 전체 선택',i:'grid',fn:()=>selectBranch(it)},{t:'가지를 이 색으로 통일',i:'color',fn:()=>colorBranch(it)}]:[]),
     {t:'설명 달기',i:'text',fn:()=>note(it)},{t:'아이콘 붙이기',i:'star',sub:[...EMO.map(e=>({t:e,fn:()=>emoji(it,e)})),{t:'아이콘 없애기',fn:()=>emoji(it,'')}]},
     {t:'개요(글)로 복사',i:'list',fn:()=>outline(it)}]})}

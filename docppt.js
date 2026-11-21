@@ -213,11 +213,11 @@ async function pptx(){const ss=slides();if(!ss.length)return toast('슬라이드
     if(f.pnote)s.addNotes(f.pnote);if(f.tr==='fade')s.transition={type:'fade'}}
   await P.writeFile({fileName:(One.main().title||'발표')+'.pptx'});toast('PowerPoint 파일을 저장했어요 · 글자는 PowerPoint에서 바로 고칠 수 있어요',{ms:3200})}
 /* =============== 메뉴 연결 =============== */
-function addMenu(pt){return[{t:'문서 (글쓰기)',i:'page',fn:()=>newDoc(pt)},{t:'슬라이드 만들기',i:'board',sub:LAYOUTS.map(([k,t,i])=>({t,i,fn:()=>newSlide(k)}))}]}
+function addMenu(pt){return[{t:'슬라이드 만들기',i:'board',sub:LAYOUTS.map(([k,t,i])=>({t,i,fn:()=>newSlide(k)}))}]}
 function newDoc(pt){const a=ap();One.home();setTimeout(()=>{const[x,y]=pt||a.center();a.push();const n=a.mk('doc',x-340,y-200);a.render();a.save();a.editNew?.(n);setTimeout(()=>{const e=document.querySelector(`.card[data-id="${n.id}"] .ed`);if(e){e.focus();const h=e.querySelector('h1');if(h){const r=document.createRange();r.selectNodeContents(h);const s=getSelection();s.removeAllRanges();s.addRange(r)}}},120)},80)}
-function moreMenu(){const n=slides().length;return[{t:'문서 새로 쓰기',i:'page',fn:()=>newDoc()},{t:n?`슬라이드 패널 (${n}장)`:'슬라이드 만들기 (PPT)',i:'board',fn:()=>n?openPanel():newSlide('title')},...(n?[{t:'발표 시작',i:'play',k:'F5',fn:()=>present()},{t:'발표 연습 (시간 재기)',i:'clock',fn:rehearse},{t:'슬라이드 한눈에 보기',i:'grid',fn:sorter},{t:'PowerPoint(.pptx)로 저장',i:'dl',fn:pptx}]:[])]}
+function moreMenu(){const n=slides().length;return[{t:n?`슬라이드 패널 (${n}장)`:'슬라이드 만들기 (PPT)',i:'board',fn:()=>n?openPanel():newSlide('title')},...(n?[{t:'발표 시작',i:'play',k:'F5',fn:()=>present()},{t:'발표 연습 (시간 재기)',i:'clock',fn:rehearse},{t:'슬라이드 한눈에 보기',i:'grid',fn:sorter},{t:'PowerPoint(.pptx)로 저장',i:'dl',fn:pptx}]:[])]}
 function cardMenu(its){const it=its[0],n=its.length;const out=[];
-  if(n===1&&it.type==='doc')out.push({t:'문서 집중 모드로 쓰기',i:'fit',fn:()=>focusDoc(it)},{t:'PDF로 저장',i:'page',fn:()=>docPDF(it)},{t:'Word로 내보내기',i:'file',fn:()=>docWord(it)},{t:'한글(HWP)로 내보내기',i:'file',fn:()=>Hwp.toHwp(it.text,titleOf(it))},{t:'마크다운으로 내보내기',i:'text',fn:()=>docMD(it)});
+  if(n===1&&it.type==='doc')out.push({t:'문서 집중 모드로 쓰기',i:'fit',fn:()=>focusDoc(it)},{t:'PDF로 저장',i:'page',fn:()=>docPDF(it)},{t:'Word로 내보내기',i:'file',fn:()=>docWord(it)},{t:'한글(HWP)로 내보내기',i:'file',fn:()=>Hwp.toHwp(it.text,titleOf(it))});
   if(n===1&&it.slide)out.push({t:'전환 효과 (이 슬라이드)',i:'play',sub:TRS.map(([k,t])=>({t:(((it.tr||'move')===k)?'✓ ':'')+t,fn:()=>setTr(k,it)}))});
   {const inS=its.filter(x=>!x.slide&&slides().some(f=>inside(f).includes(x)));if(inS.length)out.push(inS.every(x=>x.ani)?{t:'차례로 나타나기 끄기',i:'eye',fn:()=>setAni(inS,false)}:{t:'발표 때 차례로 나타나기',i:'eye',fn:()=>setAni(inS,true)})}
   if(n===1&&it.slide)out.push({t:'여기서부터 발표',i:'play',fn:()=>present(it.id)},{t:'발표자 메모',i:'text',fn:()=>slideNote(it)},{t:'슬라이드 복제',i:'copy',fn:()=>dupSlide(it)},{t:'슬라이드 패널 열기',i:'board',fn:openPanel});

@@ -1,6 +1,6 @@
 /* Achernar — 캔버스 하나에서 모든 것 + 저장 화면 */
 const One={
- on:()=>S.settings.one!==0,
+ on:()=>true,
  main(){let p=P(S.main);if(!p||p.trash||p.type!=='canvas'){p=live().filter(x=>x.type==='canvas'&&!x.wall&&!x.mediaLib).sort((a,b)=>b.updated-a.updated)[0];if(!p)p=newPage('canvas',{title:'내 캔버스',cv:Canvas.make('blank')});S.main=p.id;save()}return p},
  init(){if($('#obar'))return;document.body.insertAdjacentHTML('beforeend',`<div id="obar"><span class="msmark" title="Achernar"><i></i><i></i><i></i></span><b class="msname">Achernar</b><span id="otitle" contenteditable="plaintext-only" spellcheck="false" data-ph="내 캔버스"></span><span class="ost" id="ost">저장됨</span><span class="sp"></span>
    <button class="oback" id="oback" hidden>${ic('back')}캔버스로</button><button class="onew" id="onew" title="새 캔버스 (Ctrl+Alt+N)">${ic('plus')}<span>새 캔버스</span></button><button class="osave" id="osave" title="저장 (Ctrl+S)">${ic('save')}<span>저장</span></button><button class="omore" id="omore" aria-label="더 보기">${ic('more')}</button></div>`);
@@ -9,9 +9,9 @@ const One={
   $('#omore').onclick=e=>{const r=e.currentTarget.getBoundingClientRect();const NL=document.body.classList.contains('nologin'),BL=/^(새 캔버스|공유 · 같이 쓰기|클래스룸에 올리기|내 공유 캔버스|로그아웃|계정 삭제|보관함|🕑 저장과 지금 비교|여러 페이지로 쓰기|지금 캔버스를 내 템플릿으로 저장|선생님 모아보기|조원 기여도)/;const keep=x=>!NL||x==='-'||!(BL.test(x.t||'')||(x.sub&&/보관함/.test(x.t||'')));const pool=[
     {t:'카드 추가 메뉴 ( / )',i:'plus',fn:()=>{One.home();setTimeout(()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'/',code:'Slash',bubbles:true})),120)}},
     ...(typeof Tpl!=='undefined'?Tpl.moreMenu():[]),...(typeof Collab!=='undefined'?Collab.moreMenu():[]),...DocPPT.moreMenu(),...(typeof Submit!=='undefined'?Submit.moreMenu():[]),...(typeof Vault!=='undefined'?Vault.moreMenu():[]),...World.moreMenu(),'-',
-    {t:'만들기 · 녹음 · 사진',i:'plus',sub:Feat.menu(null)},...Feat.tools(),'-',
+    ...Feat.tools(),'-',
     ...(window.__pwa?[{t:'앱으로 설치하기',i:'dl',fn:async()=>{const p=window.__pwa;p.prompt();await p.userChoice;window.__pwa=null}}]:[]),{t:'새 캔버스',i:'plus',k:'Ctrl Alt N',fn:()=>One.newCanvas()},{t:'인쇄',i:'page',k:'Ctrl P',fn:()=>Print.open()},{t:'화면 맞춤',i:'fit',k:'Ctrl 0',fn:()=>Canvas.cmd('fit')},{t:'배경 바꾸기',i:'grid',sub:()=>Canvas.bgMenu()},{t:'문자표 (특수문자)',i:'grid',k:'Ctrl F10',fn:()=>CharMap.open()},
-    '-',{t:'사용 가이드',i:'help',fn:()=>One.help()},{t:'설정',i:'settings',fn:()=>openSettings()},{t:'여러 페이지로 쓰기 (모든 도구)',i:'layout',fn:()=>{S.settings.one=0;S.settings.simple=0;applySettings();save();render();toast('여러 페이지 모드로 바꿨어요 · 설정에서 다시 캔버스 하나 모드로 돌아올 수 있어요')}}].filter(keep);
+    '-',{t:'사용 가이드',i:'help',fn:()=>One.help()},{t:'설정',i:'settings',fn:()=>openSettings()}].filter(keep);
   const G=[['문서 · 발표','board',/(문서 새로 쓰기|슬라이드|발표|PowerPoint)/],['공유 · 같이 쓰기','user',/(공유 · 같이 쓰기|클래스룸|조원 기여도|내 공유 캔버스)/],['제출 · 내보내기','page',/(제출용|참고 자료|인쇄)/],
     ['저장 · 보관','save',/(새 캔버스|내 템플릿으로 저장|저장과 지금 비교|보관함)/],['도구','grid',/(배경 바꾸기|문자표|만들기 · 녹음|캔버스에서 찾기|구역으로 이동|자동 정리|집중 타이머|나의 작은 우주|화면 맞춤)/],['계정','user',/^(로그아웃|계정 삭제)/]];
   const used=new Set(),seen=new Set(),items=pool.filter(x=>x!=='-').filter(x=>{const k=x.t;if(seen.has(k))return false;seen.add(k);return true});if(items.some(x=>/^발표 시작/.test(x.t||''))){const i=items.findIndex(x=>/발표 모드/.test(x.t||''));if(i>=0)items.splice(i,1)}
