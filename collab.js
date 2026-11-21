@@ -125,7 +125,7 @@ function ui(){const box=document.querySelector('#achpeers');if(!box)return;
 /* ---------- 공유 창 ---------- */
 async function open(){
   if(!room){const ok=await confirmDlg('이 캔버스를 공유할까요?','링크를 받은 사람과 같이 보고 쓸 수 있어요. 사진·영상 파일은 아직 공유되지 않고, 내 기기에서만 보여요.','공유 링크 만들기');if(!ok)return;const r=await create();if(!r)return}
-  const row=(k,t,d)=>`<div class="shr"><div><b>${t}</b><small>${d}</small></div><input class="inp" readonly value="${esc(linkOf(k))}"><button class="btn" data-cp="${k}">복사</button><button class="btn gcr" data-gc="${k}" title="구글 클래스룸에 올리기">${CRI}</button></div>`;
+  const row=(k,t,d)=>`<div class="shr"><div><b>${t}</b><small>${d}</small></div><input class="inp" readonly value="${esc(linkOf(k))}"><button class="btn" data-cp="${k}">복사</button></div>`;
   const ppl=Object.entries(members).map(([u,p])=>`<li><span class="av" style="--ac:${p.c||colorOf(u)}">${esc((p.n||'?').slice(0,1))}</span>${esc(p.n||'손님')}${u===uid?' (나)':''}<em>${ROLE[p.r]||''}</em>${peers[u]||u===uid?'<i class="onl" title="접속 중"></i>':''}</li>`).join('');
   const owner=room.role==='owner';
   modal({title:'공유',cls:'mid',html:`${owner?`${row('v','보기만','내용을 볼 수만 있어요')}${row('c','댓글 가능','보면서 댓글을 달 수 있어요')}${row('e','편집 가능','같이 고치고 만들 수 있어요')}`:`<p class="note" style="margin:0 0 12px">나는 <b>${ROLE[room.role]}</b>(으)로 들어와 있어요.</p>${row('v','보기 링크','다른 사람에게 보여 줄 때')}`}
@@ -139,7 +139,7 @@ const CRI='<svg viewBox="0 0 24 24" width="16" height="16"><rect x="2.5" y="4" w
 function classroom(url){if(!url)return toast('먼저 공유 링크를 만들어 주세요');const w=open('https://classroom.google.com/share?url='+encodeURIComponent(url),'_blank','width=640,height=720,noopener');if(!w)toast('팝업이 막혔어요 · 주소창 오른쪽에서 팝업을 허용해 주세요',{ms:3500})}
 async function toClassroom(){if(!room){const ok=await confirmDlg('클래스룸에 올릴까요?','캔버스를 공유 링크로 만든 뒤 클래스룸 과제·자료·공지로 올려요. 기본으로 ‘댓글 가능’ 링크를 올려요.','공유하고 올리기');if(!ok)return;const r=await create();if(!r)return}
   if(room.role!=='owner')return classroom(linkOf('v'));classroom(linkOf('c'))}
-function moreMenu(){return[{t:'공유 · 같이 쓰기',i:'user',fn:open},...(room?[{t:'조원 기여도',i:'chart',fn:contrib}]:[]),{t:'클래스룸에 올리기',i:'page',fn:toClassroom},...(isG()?[{t:'내 공유 캔버스',i:'page',fn:myRooms},{t:'로그아웃',i:'back',fn:signOut},{t:'계정 삭제',i:'trash',fn:deleteAccount}]:[{t:'구글로 로그인',i:'user',fn:signIn}])]}
+function moreMenu(){return[{t:'공유 · 같이 쓰기',i:'user',fn:open},...(room?[{t:'조원 기여도',i:'chart',fn:contrib}]:[]),...(isG()?[{t:'내 공유 캔버스',i:'page',fn:myRooms},{t:'로그아웃',i:'back',fn:signOut},{t:'계정 삭제',i:'trash',fn:deleteAccount}]:[{t:'구글로 로그인',i:'user',fn:signIn}])]}
 /* ---------- 조원 기여도 ---------- */
 function contrib(){const c=A().C();if(!c)return;const P={};const who=(u,n)=>P[u]||(P[u]={n:n||'이름 없음',made:0,chars:0,edits:0,cm:0,chat:0});
   Object.entries(members).forEach(([u,p])=>who(u,p.n));
