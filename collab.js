@@ -130,7 +130,7 @@ const CRI='<svg viewBox="0 0 24 24" width="16" height="16"><rect x="2.5" y="4" w
 function classroom(url){if(!url)return toast('먼저 공유 링크를 만들어 주세요');const w=open('https://classroom.google.com/share?url='+encodeURIComponent(url),'_blank','width=640,height=720,noopener');if(!w)toast('팝업이 막혔어요 · 주소창 오른쪽에서 팝업을 허용해 주세요',{ms:3500})}
 async function toClassroom(){if(!room){const ok=await confirmDlg('클래스룸에 올릴까요?','캔버스를 공유 링크로 만든 뒤 클래스룸 과제·자료·공지로 올려요. 기본으로 ‘댓글 가능’ 링크를 올려요.','공유하고 올리기');if(!ok)return;const r=await create();if(!r)return}
   if(room.role!=='owner')return classroom(linkOf('v'));classroom(linkOf('c'))}
-function moreMenu(){return[{t:'공유 · 같이 쓰기',i:'user',fn:open},{t:'클래스룸에 올리기',i:'page',fn:toClassroom},...(isG()?[{t:'내 공유 캔버스',i:'page',fn:myRooms}]:[{t:'구글로 로그인',i:'user',fn:signIn}])]}
+function moreMenu(){return[{t:'공유 · 같이 쓰기',i:'user',fn:open},{t:'클래스룸에 올리기',i:'page',fn:toClassroom},...(isG()?[{t:'내 공유 캔버스',i:'page',fn:myRooms},{t:'로그아웃',i:'back',fn:signOut},{t:'계정 삭제',i:'trash',fn:deleteAccount}]:[{t:'구글로 로그인',i:'user',fn:signIn}])]}
 /* ---------- 댓글 ---------- */
 const Cm=(()=>{let panel=null,tab='open',focusCard=null;
   const C=()=>A().C();const list=()=>{const c=C();if(!c)return[];if(!c.comments)c.comments=[];return c.comments};
@@ -211,8 +211,25 @@ function acct(){const b=document.querySelector('#achacct');if(!b)return;const u=
   if(u&&!u.isAnonymous){b.innerHTML=u.photoURL?`<img src="${esc(u.photoURL)}" alt="" referrerpolicy="no-referrer">`:`<span class="av" style="--ac:${colorOf(uid)}">${esc(myName().slice(0,1))}</span>`;b.title=`${u.displayName||''} ${u.email||''}`;b.classList.add('on')}
   else{b.innerHTML='<span>로그인</span>';b.title='구글 계정으로 로그인';b.classList.remove('on')}
   Chat.fab()}
-function acctMenu(e){if(!isG())return signIn();const r=e.currentTarget.getBoundingClientRect(),u=fb.auth().currentUser;
-  menu(r.left,r.bottom+6,[{t:`${u.displayName||myName()} · ${u.email||''}`,i:'user',fn:()=>{}},{t:'내 공유 캔버스',i:'page',fn:myRooms},{t:'1:1 대화',i:'note',fn:()=>Chat.open('dm')},'-',{t:'로그아웃',i:'back',fn:signOut}])}
+function acctMenu(e){if(!isG())return signIn();e.stopPropagation();let pop=document.querySelector('#acpop');if(pop){pop.remove();return}const u=fb.auth().currentUser;
+  pop=document.createElement('div');pop.id='acpop';pop.innerHTML=`<div class="acme">${u.photoURL?`<img src="${esc(u.photoURL)}" alt="" referrerpolicy="no-referrer">`:`<span class="av" style="--ac:${colorOf(uid)}">${esc(myName().slice(0,1))}</span>`}<div><b>${esc(u.displayName||myName())}</b><small>${esc(u.email||'')}</small></div></div>
+   <button data-a="rooms">내 공유 캔버스</button><button data-a="dm">1:1 대화</button><button data-a="name">표시 이름 바꾸기</button><hr><button data-a="out">로그아웃</button><button data-a="del" class="dang">계정 삭제</button>`;
+  document.body.appendChild(pop);const r=e.currentTarget.getBoundingClientRect();pop.style.top=r.bottom+8+'px';pop.style.right=Math.max(8,innerWidth-r.right)+'px';
+  const off=ev=>{if(!pop.contains(ev.target)){pop.remove();removeEventListener('pointerdown',off,true)}};setTimeout(()=>addEventListener('pointerdown',off,true));
+  pop.onclick=async ev=>{const a=ev.target.closest('[data-a]')?.dataset.a;if(!a)return;pop.remove();removeEventListener('pointerdown',off,true);
+    if(a==='rooms')myRooms();if(a==='dm')Chat.open('dm');if(a==='out')signOut();if(a==='del')deleteAccount();
+    if(a==='name'){const n=(await ask('표시 이름 바꾸기',{val:myName(),ok:'바꾸기'})||'').trim().slice(0,20);if(!n)return;setName(n);db.ref('profiles/'+uid+'/n').set(n).catch(()=>{});if(room){roomRef.child('members/'+uid+'/n').set(n).catch(()=>{});pres&&pres.update({n})}ui();acct();toast('이름을 바꿨어요')}}}
+async function deleteAccount(){if(!isG())return;
+  const ok=await new Promise(res=>{let done=false;modal({title:'계정을 삭제할까요?',cls:'mid',html:`<p style="margin:0 0 10px;line-height:1.6">이 작업은 <b>되돌릴 수 없어요.</b> 아래가 함께 지워져요.</p><ul class="note" style="margin:0 0 12px;padding-left:18px;line-height:1.7"><li>내가 만든 공유 캔버스의 공유 (들어온 사람들도 더 이상 볼 수 없어요)</li><li>내 공유 캔버스 목록, 프로필, 1:1 대화 목록</li><li>구글 로그인 연결</li></ul><p class="note" style="margin:0 0 10px">이 기기에 있는 캔버스 내용은 지워지지 않아요. 상대방에게 이미 보낸 1:1 메시지는 상대방 쪽에 남을 수 있어요.</p><p style="margin:0 0 6px;font-size:13px">확인을 위해 <b>계정 삭제</b>라고 입력해 주세요.</p><input class="inp" data-cf placeholder="계정 삭제"><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn" data-no>취소</button><button class="btn dangf" data-yes disabled>계정 삭제</button></div>`,
+    onOpen:()=>{const b=document.querySelector('#mbody'),i=b.querySelector('[data-cf]'),y=b.querySelector('[data-yes]');i.oninput=()=>{y.disabled=i.value.trim()!=='계정 삭제'};b.querySelector('[data-no]').onclick=()=>closeModal();y.onclick=()=>{done=true;closeModal();res(true)};setTimeout(()=>i.focus(),30)},onClose:()=>{if(!done)res(false)}})});
+  if(!ok)return;const au=fb.auth(),u=au.currentUser;
+  try{await u.reauthenticateWithPopup(new fb.auth.GoogleAuthProvider())}catch(e){if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request')return toast('계정 삭제를 취소했어요');if(e.code!=='auth/user-mismatch'){console.warn(e);return toast('본인 확인을 하지 못했어요: '+(e.code||e.message),{ms:3500})}return toast('지금 로그인한 계정으로 다시 확인해 주세요',{ms:3500})}
+  toast('계정을 지우는 중이에요…',{ms:8000});const me=uid,m=One.main();if(m.room){m.room=null;touch(m)}stop(true);Chat.unbindUser();
+  let rooms={};try{rooms=(await db.ref('users/'+me+'/rooms').once('value')).val()||{}}catch(e){}
+  for(const[r,x]of Object.entries(rooms)){try{if(x.r==='owner')await db.ref().update({['rooms/'+r]:null,['keys/'+r]:null});else await db.ref().update({['access/'+r+'/'+me]:null,['rooms/'+r+'/members/'+me]:null})}catch(e){console.warn('room cleanup',r,e)}}
+  try{await db.ref().update({['users/'+me]:null,['profiles/'+me]:null})}catch(e){console.warn(e)}
+  try{await u.delete()}catch(e){console.warn(e);return toast('계정을 지우지 못했어요: '+(e.code||e.message),{ms:4000})}
+  try{localStorage.removeItem('ach-g')}catch(e){}uid=null;acct();toast('계정을 삭제했어요 · 이용해 주셔서 고마워요',{ms:4000})}
 
 /* ---------- 채팅 (캔버스 채팅 · 1:1 대화) ---------- */
 const Chat=(()=>{let el=null,fabEl=null,tab='room',thread=null,roomMsgs=[],roomRefC=null,unread=0,inbox={},dmRef=null,dmMsgs=[],inboxRef=null,booted=Date.now();
@@ -276,5 +293,5 @@ async function boot(){let tries=0;while((!document.querySelector('#obar')||typeo
   Cm.refresh()}
 addEventListener('hashchange',()=>{const h=new URLSearchParams(location.hash.slice(1));if(h.get('r')&&(!room||room.id!==h.get('r')))boot()});
 if(document.readyState==='loading')addEventListener('DOMContentLoaded',()=>setTimeout(boot,300));else setTimeout(boot,300);
-return {open,join,leave,cardMenu,moreMenu,signIn,signOut,myRooms,chat:Chat,classroom:toClassroom,comments:Cm,state:()=>({room,uid,peers,members}),_last:()=>last};
+return {open,join,leave,cardMenu,moreMenu,signIn,signOut,deleteAccount,myRooms,chat:Chat,classroom:toClassroom,comments:Cm,state:()=>({room,uid,peers,members}),_last:()=>last};
 })();
