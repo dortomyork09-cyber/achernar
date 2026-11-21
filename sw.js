@@ -1,5 +1,5 @@
 /* Achernar 오프라인 캐시 — 파일을 고치면 VERSION 숫자를 올려 주세요 */
-const VERSION='ach-v11';
+const VERSION='ach-v12';
 const FILES=["./","auth.js","canvas.js","core.js","database.js","docppt.js","editor.js","extra.js","feat.js","graph.js","icons.js","icons/apple-touch-icon.png","icons/favicon-32.png","icons/icon-192.png","icons/icon.svg","icons/icon-512.png","icons/maskable-192.png","icons/maskable-512.png","index.html","manifest.webmanifest","mind.js","mind3d.js","ms.js","ms2.js","one.js","print.js","saveboard.js","style.css","sync.js","three.min.js","world.js","zen.js","vault.js","tpl.js","collab.js","hwp.js"];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(VERSION).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==VERSION).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

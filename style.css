@@ -1411,3 +1411,6 @@ body.ptrdown iframe{pointer-events:none!important}
 #acpop .acme{display:flex;gap:10px;align-items:center;padding:8px 8px 12px}#acpop .acme img,#acpop .acme .av{width:36px;height:36px;border-radius:50%}#acpop .acme div{display:flex;flex-direction:column;min-width:0}#acpop small{color:var(--mute);font-size:12px;overflow:hidden;text-overflow:ellipsis}
 #acpop button{border:0;background:none;text-align:left;padding:9px 10px;border-radius:8px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--ink)}#acpop button:hover{background:#F5F2EA}#acpop button.dang{color:#C62828}#acpop hr{border:0;border-top:1px solid var(--line);margin:4px 0}
 .btn.dangf{background:#C62828;color:#fff;border-color:#C62828}.btn.dangf:disabled{opacity:.4;cursor:not-allowed}
+/* 로그인 전: 캔버스 말고 다른 기능 숨기기 */
+body.nologin #osave,body.nologin #onew,body.nologin #achcm,body.nologin #achshare,body.nologin #achpeers,body.nologin #chatfab,body.nologin #cpins,body.nologin #vchip,body.nologin #cmp{display:none!important}
+body.nologin #achacct{background:#141C33!important;color:#F4EFE3!important;border-color:#141C33!important}

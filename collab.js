@@ -167,7 +167,7 @@ const Cm=(()=>{let panel=null,tab='open',focusCard=null;
   async function reply(id,t){t=(t||'').trim();if(!t)return;const n=await who();if(!n)return;const c=list().find(x=>x.id===id);if(!c)return;(c.rep||(c.rep=[])).push({id:uid_(),t:t.slice(0,2000),n,u:uid||'me',c:colorOf(uid||n),at:Date.now()});commit()}
   const uid_=()=>typeof window.uid==='function'?window.uid():rid(10);
   function commit(){A().save();render();pins()}
-  function open(card){ensure();panel.hidden=false;document.body.classList.add('cmopen');if(card)focusCard=card;render();setTimeout(()=>panel.querySelector('[data-new]')?.focus(),30)}
+  function open(card){if(!isG()){needLogin('댓글은 구글 계정으로 로그인하면 쓸 수 있어요.').then(ok=>{if(ok)open(card)});return}ensure();panel.hidden=false;document.body.classList.add('cmopen');if(card)focusCard=card;render();setTimeout(()=>panel.querySelector('[data-new]')?.focus(),30)}
   function close(){if(!panel)return;panel.hidden=true;document.body.classList.remove('cmopen');focusCard=null}
   function toggle(){ensure();panel.hidden?open():close()}
   function pins(){const w=A()?.worldEl?.();if(!w)return;let L=w.querySelector('#cpins');if(!L){L=document.createElement('div');L.id='cpins';w.appendChild(L)}
@@ -207,7 +207,7 @@ async function myRooms(){try{await connect()}catch(e){return toast('서버에 �
   const list=Object.entries(v).sort((a,b)=>(b[1].at||0)-(a[1].at||0));
   modal({title:'내 공유 캔버스',cls:'mid',html:list.length?`<ul class="myr">${list.map(([r,x])=>`<li><button data-r="${r}"><b>${esc(x.t||'캔버스')}</b><small>${ROLE[x.r]||''} · ${new Date(x.at||0).toLocaleDateString()}</small></button></li>`).join('')}</ul>`:'<p class="note">아직 공유하거나 들어간 캔버스가 없어요</p>',
     onOpen:()=>document.querySelectorAll('#mbody [data-r]').forEach(b=>b.onclick=()=>{closeModal();const x=v[b.dataset.r];const k=x.k&&x.r!=='owner'?Object.entries(x.k)[0]:null;join(b.dataset.r,k?k[0]:'v',k?k[1]:null)})})}
-function acct(){const b=document.querySelector('#achacct');if(!b)return;const u=fb&&fb.auth().currentUser;
+function acct(){document.body.classList.toggle('nologin',!isG());const b=document.querySelector('#achacct');if(!b)return;const u=fb&&fb.auth().currentUser;
   if(u&&!u.isAnonymous){b.innerHTML=u.photoURL?`<img src="${esc(u.photoURL)}" alt="" referrerpolicy="no-referrer">`:`<span class="av" style="--ac:${colorOf(uid)}">${esc(myName().slice(0,1))}</span>`;b.title=`${u.displayName||''} ${u.email||''}`;b.classList.add('on')}
   else{b.innerHTML='<span>로그인</span>';b.title='구글 계정으로 로그인';b.classList.remove('on')}
   Chat.fab()}
@@ -275,7 +275,7 @@ const Chat=(()=>{let el=null,fabEl=null,tab='room',thread=null,roomMsgs=[],roomR
   function close(){if(!el)return;el.hidden=true;document.body.classList.remove('chatopen');closeThread()}
   return {bindRoom,unbindRoom,bindUser,unbindUser,open,close,fab}})();
 /* ---------- 메뉴 · 시작 ---------- */
-function cardMenu(its){if(!its||!its.length)return[];return[{t:'댓글 달기',i:'note',fn:()=>Cm.open(its[0].id)}]}
+function cardMenu(its){if(!its||!its.length||!isG())return[];return[{t:'댓글 달기',i:'note',fn:()=>Cm.open(its[0].id)}]}
 function mountUI(){const bar=document.querySelector('#obar');if(!bar||document.querySelector('#achshare'))return;
   const anchor=document.querySelector('#onew');
   const peersEl=document.createElement('div');peersEl.id='achpeers';peersEl.hidden=true;
@@ -284,6 +284,7 @@ function mountUI(){const bar=document.querySelector('#obar');if(!bar||document.q
   const ac=document.createElement('button');ac.id='achacct';ac.className='onew achac';ac.onclick=acctMenu;
   anchor.parentElement.insertBefore(peersEl,anchor);anchor.parentElement.insertBefore(cm,anchor);anchor.parentElement.insertBefore(sh,anchor);anchor.parentElement.insertBefore(ac,anchor);acct();
   document.addEventListener('pointermove',e=>{const vp=A().vpEl();if(vp&&vp.contains(e.target))onMove(e)},{passive:true})}
+(document.body?Promise.resolve():new Promise(r=>addEventListener('DOMContentLoaded',r))).then(()=>{let g=false;try{g=localStorage.getItem('ach-g')==='1'}catch(e){}if(!g)document.body.classList.add('nologin')});
 async function boot(){let tries=0;while((!document.querySelector('#obar')||typeof Canvas==='undefined'||!A()?.vpEl?.()||!A().C())&&tries++<100)await new Promise(r=>setTimeout(r,100));
   mountUI();setInterval(()=>{mountUI();if(!room)Cm.pins()},2000);setInterval(()=>{const L=A()?.worldEl?.()?.querySelector('#cpins');if(L)L.style.setProperty('--z',A().cam().z)},250);
   let wasG=false;try{wasG=localStorage.getItem('ach-g')==='1'}catch(e){}if(wasG){try{await connect();if(isG()){Chat.bindUser();try{db.ref('profiles/'+uid).update({n:myName(),at:Date.now()})}catch(e){}}acct()}catch(e){console.warn(e)}}
