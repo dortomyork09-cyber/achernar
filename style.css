@@ -1661,3 +1661,18 @@ body:has(#vp[data-bg=board]) #toast,body:has(#vp[data-bg=night]) #toast{box-shad
 /* 로그인 전 확인 */
 .cgk{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid #E4E4E7;border-radius:10px;margin-top:8px;cursor:pointer;font-size:14.5px}.cgk input{width:18px;height:18px;margin-top:2px;flex:none;accent-color:#18181B}.cgk small{color:var(--mute)}.cgk:has(input:checked){border-color:#18181B;background:#FAFAFA}
 .card.veil.cin{animation:none}
+/* 메뉴 옆으로 넘기기 */
+@keyframes mvOpen{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+@keyframes mvFwd{from{opacity:.2;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes mvBack{from{opacity:.2;transform:translateX(-28px)}to{opacity:1;transform:none}}
+#menu.mv-open:not(.mnghost){animation:mvOpen .2s cubic-bezier(.2,.8,.3,1)}
+#menu.mv-fwd:not(.mnghost)>*{animation:mvFwd .22s cubic-bezier(.2,.8,.3,1)}
+#menu.mv-back:not(.mnghost)>*{animation:mvBack .22s cubic-bezier(.2,.8,.3,1)}
+#menu.mv-fwd,#menu.mv-back{overflow-x:hidden}
+@media (prefers-reduced-motion:reduce){#menu.mv-open,#menu.mv-fwd>*,#menu.mv-back>*{animation:none!important}}
+/* 폰: 글자 도구 막대를 위쪽 한 줄로 (카드 가리지 않게) */
+@media(max-width:700px){
+  #fmtb{left:8px!important;right:8px!important;top:114px!important;bottom:auto!important;transform:none!important;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;border-radius:12px}
+  #fmtb::-webkit-scrollbar{display:none}#fmtb>*{flex:none}
+  #fmtb .fdrag,#fmtb [data-f=drag]{display:none}
+}

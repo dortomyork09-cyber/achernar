@@ -180,15 +180,15 @@ function pageMenu(p,x,y){if(!p)return;const lock=!!p.lock;menu(x,y,[
 
 /* ---------- 메뉴 ---------- */
 let MENU=null;
-function menu(x,y,items,o={}){const m=$('#menu');MENU={items,x,y,o,stack:o.stack||[],act:-1};m.innerHTML=menuHTML(items,MENU.stack.length);m.hidden=false;m.scrollTop=0;place(m,x,y);}
+function menu(x,y,items,o={}){const m=$('#menu');MENU={items,x,y,o,stack:o.stack||[],act:-1};m.innerHTML=menuHTML(items,MENU.stack.length);const was=!m.hidden;m.hidden=false;m.scrollTop=0;place(m,x,y);const d=o.dir||(was?'':'open');m.classList.remove('mv-open','mv-fwd','mv-back');if(d){void m.offsetWidth;m.classList.add('mv-'+d)}}
 function menuHTML(items,back){return(back?`<button class="mi" data-mi="back">${ic('back')}뒤로</button><div class="msep"></div>`:'')+items.map((it,i)=>{if(!it)return'';if(it==='-')return'<div class="msep"></div>';if(it.h)return`<div class="mh">${esc(it.h)}</div>`;
   if(it.colors)return`<div class="mcol">${it.colors.map(c=>`<button class="swt${c.k===it.cur?' on':''}" data-mi="${i}" data-c="${esc(c.k)}" style="--v:${c.v}" title="${esc(c.n||'')}" aria-label="${esc(c.n||'색')}"></button>`).join('')}</div>`;
   return`<button class="mi${it.dg?' dg':''}${it.ai?' ai':''}" role="menuitem" data-mi="${i}" ${it.dis?`disabled title="${esc(typeof it.dis==='string'?it.dis:'')}"`:''}>${it.em?`<span class="em">${it.em}</span>`:it.i?ic(it.i):'<span class="em"></span>'}<span style="overflow:hidden;text-overflow:ellipsis">${esc(String(it.t).replace(/^[\p{Extended_Pictographic}\uFE0F\u200D\s]+(?=[^\p{Extended_Pictographic}\uFE0F\u200D\s])/u,''))}</span>${it.on?'<span class="ck">✓</span>':''}${it.sub?'<small>›</small>':it.k?`<span class="k">${esc(it.k)}</span>`:it.s?`<small>${esc(it.s)}</small>`:''}</button>`}).join('')}
 function place(el,x,y){const w=el.offsetWidth,h=el.offsetHeight;el.style.left=cl(x,6,innerWidth-w-6)+'px';el.style.top=(y+h>innerHeight-6?Math.max(6,y-h-8):y)+'px'}
 function closeMenu(){const m=$('#menu');MENU=null;if(m.hidden)return;ghostOut(m,'mnghost');m.hidden=true}
 function menuClick(e){const b=e.target.closest('[data-mi]');if(!b||!MENU)return;const k=b.dataset.mi;
-  if(k==='back'){const s=MENU.stack.pop();return menu(MENU.x,MENU.y,s,{...MENU.o,stack:MENU.stack,subFn:null})}
-  const it=MENU.items[+k];if(!it)return;if(it.sub){const st=[...MENU.stack,MENU.items];return menu(MENU.x,MENU.y,typeof it.sub==='function'?it.sub():it.sub,{...MENU.o,stack:st,subFn:typeof it.sub==='function'?it.sub:null})}
+  if(k==='back'){const s=MENU.stack.pop();return menu(MENU.x,MENU.y,s,{...MENU.o,stack:MENU.stack,subFn:null,dir:'back'})}
+  const it=MENU.items[+k];if(!it)return;if(it.sub){const st=[...MENU.stack,MENU.items];return menu(MENU.x,MENU.y,typeof it.sub==='function'?it.sub():it.sub,{...MENU.o,stack:st,subFn:typeof it.sub==='function'?it.sub:null,dir:'fwd'})}
   if(it.colors){const c=b.dataset.c;closeMenu();return it.fn(c)}if(it.keep){it.fn?.();const f=MENU.o.subFn;return menu(MENU.x,MENU.y,f?f():MENU.items,{...MENU.o,stack:MENU.stack})}closeMenu();it.fn?.()}
 function menuKey(e){const bs=$$('#menu .mi:not(:disabled)');if(!bs.length)return false;let i=bs.indexOf(document.activeElement);
   if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();i=e.key==='ArrowDown'?(i+1)%bs.length:(i-1+bs.length)%bs.length;bs[i].focus();return true}
