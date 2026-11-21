@@ -1,4 +1,6 @@
 'use strict';
+/* 클립보드: 권한이 막히면 옛 방식으로 한 번 더 */
+(()=>{const c=navigator.clipboard;if(!c||!c.writeText)return;const o=c.writeText.bind(c);c.writeText=t=>o(t).catch(e=>{try{const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;left:-9999px;top:0';document.body.appendChild(a);a.select();const ok=document.execCommand('copy');a.remove();if(ok)return}catch(_){}throw e})})();
 /* =========================================================
    ULTIMATE NOTE — core: 저장, 라우팅, 사이드바, 홈, 검색, 설정, 패널
    ========================================================= */
@@ -207,7 +209,7 @@ let toastT;function toast(msg,o={}){const t=$('#toast');t.innerHTML=`<span>${esc
 function hidePop(){$('#pop').hidden=true}
 function pickFile(accept='',multiple=false){return new Promise(res=>{const f=$('#fileIn');f.accept=accept;f.multiple=multiple;f.value='';f.onchange=()=>res([...f.files]);f.click()})}
 async function saveFile(name,data){if(DL){try{await DL.save({filename:name,data});return toast('저장했어요: '+name)}catch(e){if(e?.code==='declined')return toast('저장을 취소했어요');if(e?.code==='rate_limited')return toast('잠시 후 다시 시도해 주세요')}}
-  if(typeof data==='string')modal({title:'아래 내용을 복사하세요',cls:'mid',html:`<p class="note">이 화면에서는 파일 저장이 막혀 있어요. 내용을 복사해 메모장 등에 붙여넣어 저장하세요.</p><textarea class="inp" style="height:300px;font:13px/1.5 var(--mono)" readonly>${esc(data)}</textarea>`,btns:[{t:'복사',cls:'pr',fn:()=>{navigator.clipboard?.writeText(data).then(()=>toast('복사했어요'));return false}},{t:'닫기'}]});
+  if(typeof data==='string')modal({title:'아래 내용을 복사하세요',cls:'mid',html:`<p class="note">이 화면에서는 파일 저장이 막혀 있어요. 내용을 복사해 메모장 등에 붙여넣어 저장하세요.</p><textarea class="inp" style="height:300px;font:13px/1.5 var(--mono)" readonly>${esc(data)}</textarea>`,btns:[{t:'복사',cls:'pr',fn:()=>{navigator.clipboard?.writeText(data).then(()=>toast('복사했어요')).catch(()=>toast('복사가 막혀 있어요 · 직접 선택해서 복사하세요'));return false}},{t:'닫기'}]});
   else{const u=URL.createObjectURL(data);modal({title:name,html:`<p class="note">이 화면에서는 파일 저장이 막혀 있어요. 그림을 오른쪽 클릭해서 저장하세요.</p><img src="${u}" alt="" style="width:100%;border-radius:10px">`,btns:[{t:'닫기'}]})}}
 
 /* ---------- 홈 ---------- */
@@ -536,8 +538,6 @@ p:카드를 오른쪽 클릭 → **만약에?** 를 누르면 복제본이 옆 �
 p:오른쪽 클릭 → **갈래 나란히 비교** 로 한눈에 보고, 마음에 드는 갈래에 **★ 이 갈래로 고르기** 를 붙여요.
 h2:🎲 아이디어 믹서
 p:카드를 2~5개 고르고 **믹서** 를 누르면 각 카드에서 단어를 하나씩 뽑아 ‘농구 × 음악 × 실패’ 같은 새 조합 카드를 만들어요. 다시 누를 때마다 바뀌어요.
-h2:🔒 타임캡슐
-p:카드를 오른쪽 클릭 → **타임캡슐로 묻기** 에서 열릴 날짜를 정하면 그날까지 흐리게 잠겨 고칠 수 없어요. 그날 캔버스를 열면 열리는 애니메이션이 나와요.
 h2:🌤 분위기 모드
 p:아래 상태 표시줄 오른쪽 버튼으로 바꿔요.
 ul:**집중** — 메뉴가 모두 사라지고 작업만 남아요 (Esc로 돌아오기)

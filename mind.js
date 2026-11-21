@@ -51,21 +51,20 @@ addEventListener('keydown',e=>{if(joining&&e.key==='Escape'){joining=null;docume
 
 /* 웹 링크 열기 (막히면 복사) */
 function openURL(u){let w=null;try{w=window.open(u,'_blank')}catch(e){}if(w){try{w.opener=null}catch(e){}return}
-  modal({title:'링크 열기',html:`<p class="note" style="margin-top:0">이 화면에서는 새 창이 막혀 있어요. 아래 버튼으로 열거나, 주소를 복사해 브라우저에 붙여 넣으세요.</p><div class="urlbox">${esc(u)}</div>`,btns:[{t:'주소 복사',fn:()=>{navigator.clipboard?.writeText(u);toast('복사했어요')}},{t:'열기',cls:'pr',fn:()=>{const a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove()}}]})}
+  modal({title:'링크 열기',html:`<p class="note" style="margin-top:0">이 화면에서는 새 창이 막혀 있어요. 아래 버튼으로 열거나, 주소를 복사해 브라우저에 붙여 넣으세요.</p><div class="urlbox">${esc(u)}</div>`,btns:[{t:'주소 복사',fn:()=>{navigator.clipboard?.writeText(u).catch(()=>toast('복사가 막혀 있어요 · 직접 선택해서 복사하세요'));toast('복사했어요')}},{t:'열기',cls:'pr',fn:()=>{const a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove()}}]})}
 document.addEventListener('click',e=>{const a=e.target.closest('a[href]');if(!a)return;const u=a.getAttribute('href');if(!/^https?:/i.test(u))return;if(a.closest('#modal'))return;if(a.closest('[data-f]')&&!a.classList.contains('lopen'))return;e.preventDefault();e.stopPropagation();openURL(u)},true);
 
 /* 메뉴 */
 function cardMenu(its){const it=its[0],n=its.length;const out=[];
   if(n>=2)out.push({t:'🔗 선으로 잇기',i:'link',fn:()=>join(its)});
   if(n===1)out.push({t:'🔗 다른 카드와 잇기…',i:'link',fn:()=>startJoin(it)});
-  if(n===1&&it.type==='link')out.push({t:'↗ 링크 열기',i:'web',fn:()=>openURL(/^[a-z]+:\/\//i.test(it.url)?it.url:'https://'+it.url)},{t:'주소 복사',i:'copy',fn:()=>{navigator.clipboard?.writeText(it.url);toast('복사했어요')}});
-  if(n===1&&(isMind(it)||parent(it.id)||kids(it.id).length))out.push({t:'우주로 띄워 보기 (3D)',i:'cube',fn:()=>Mind3D.open(rootOf(it).id)});
+  if(n===1&&it.type==='link')out.push({t:'↗ 링크 열기',i:'web',fn:()=>openURL(/^[a-z]+:\/\//i.test(it.url)?it.url:'https://'+it.url)},{t:'주소 복사',i:'copy',fn:()=>{navigator.clipboard?.writeText(it.url).catch(()=>toast('복사가 막혀 있어요 · 직접 선택해서 복사하세요'));toast('복사했어요')}});
+  if(n===1&&(isMind(it)||parent(it.id)||kids(it.id).length))
   if(n===1&&isMind(it)){const hasK=kids(it.id).length||it.clp;out.push({t:'🧠 마인드맵',i:'node',sub:[
-    {t:'나의 작은 우주로 보기 (3D)',i:'cube',fn:()=>Mind3D.open(rootOf(it).id)},
     {t:'정렬: 오른쪽으로',i:'arrow',fn:()=>layout(it,'right')},{t:'정렬: 양쪽으로',i:'layout',fn:()=>layout(it,'both')},{t:'정렬: 아래로 (조직도)',i:'down',fn:()=>layout(it,'down')},{t:'정렬: 둥글게 (방사형)',i:'node',fn:()=>layout(it,'radial')},{t:'정렬: 왼쪽으로',i:'back',fn:()=>layout(it,'left')},'-',
     ...(hasK?[{t:it.clp?'가지 펼치기':'가지 접기',i:'toggle',fn:()=>fold(it)},{t:'가지 전체 선택',i:'grid',fn:()=>selectBranch(it)},{t:'가지를 이 색으로 통일',i:'color',fn:()=>colorBranch(it)}]:[]),
     {t:'설명 달기',i:'text',fn:()=>note(it)},{t:'아이콘 붙이기',i:'star',sub:[...EMO.map(e=>({t:e,fn:()=>emoji(it,e)})),{t:'아이콘 없애기',fn:()=>emoji(it,'')}]},
     {t:'개요(글)로 복사',i:'list',fn:()=>outline(it)}]})}
   return out}
-function addMenu(pt){return[{t:'🧠 글 → 마인드맵',i:'node',fn:()=>fromOutline(pt)},{t:'나의 작은 우주 (3D 마인드맵)',i:'cube',fn:()=>Mind3D.open()}]}
+function addMenu(pt){return[{t:'🧠 글 → 마인드맵',i:'node',fn:()=>fromOutline(pt)}]}
 return{layout,fold,join,openURL,cardMenu,addMenu,fromOutline,outline}})();

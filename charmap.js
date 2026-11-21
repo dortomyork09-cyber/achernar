@@ -36,7 +36,7 @@ function put(ch){
     if(s.rangeCount){lastRange=s.getRangeAt(0).cloneRange();remember(ed,lastRange)}}
   else if(typeof Canvas!=='undefined'&&Canvas.api.C&&Canvas.api.C()){const A=Canvas.api,[x,y]=A.center();const n=A.mk('text',x-60,y-30,{text:ch,w:140,h:70});A.push();A.render();A.save();A.setSel([n.id]);
     setTimeout(()=>{const el=document.querySelector(`.card[data-id="${n.id}"] [contenteditable]`);if(el){lastEd=el;el.focus();const r=document.createRange();r.selectNodeContents(el);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r);lastRange=r.cloneRange()}},30)}
-  else{navigator.clipboard?.writeText(ch);typeof toast==='function'&&toast(`‘${ch}’ 복사했어요 · 붙여넣기 하세요`)}
+  else{navigator.clipboard?.writeText(ch).catch(()=>toast('복사가 막혀 있어요 · 직접 선택해서 복사하세요'));typeof toast==='function'&&toast(`‘${ch}’ 복사했어요 · 붙여넣기 하세요`)}
   recent=[ch,...recent.filter(c=>c!==ch)].slice(0,24);try{localStorage.setItem(RK,JSON.stringify(recent))}catch(e){}
 }
 let tab=0;

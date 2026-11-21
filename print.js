@@ -2,7 +2,7 @@
 const Print=(()=>{
 const ap=()=>Canvas.api;
 const PAPER={a4p:['A4 세로','210mm','297mm'],a4l:['A4 가로','297mm','210mm'],a3l:['A3 가로','420mm','297mm'],ltp:['레터 세로','216mm','279mm']};
-let opt={what:'all',paper:'a4l',margin:'n',gray:false,head:true};
+let opt={what:'all',paper:'a4l',margin:'n',gray:false,head:false};
 try{Object.assign(opt,JSON.parse(localStorage.getItem('ms-print')||'{}'))}catch(e){}
 const saveOpt=()=>{try{localStorage.setItem('ms-print',JSON.stringify({paper:opt.paper,margin:opt.margin,gray:opt.gray,head:opt.head}))}catch(e){}};
 const toURL=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)});
@@ -19,13 +19,13 @@ async function regions(){const a=ap(),C=a.C();
   const r=union(C.items.map(i=>a.box(i.id)).filter(Boolean),40);return r?[{r,t:One.main().title||'캔버스'}]:[]}
 async function pages(){const rs=await regions();const out=[];for(const g of rs){const sc=Math.max(.5,Math.min(3,5000/Math.max(g.r.w,g.r.h)));try{out.push({...g,u:await toURL(await ap().png(g.r,sc))})}catch(e){}}return out}
 function css(){const[,W,H]=PAPER[opt.paper];const m=opt.margin==='0'?'0':opt.margin==='s'?'6mm':'12mm';
-  return `@page{size:${W} ${H};margin:${m}}html,body{margin:0;background:#fff;font:12px "Pretendard","Noto Sans KR",sans-serif;color:#555}${opt.gray?'img{filter:grayscale(1)}':''}
-  .pg{width:calc(${W} - 2*${m});height:calc(${H} - 2*${m});display:flex;flex-direction:column;page-break-after:always;break-after:page;overflow:hidden}.pg:last-child{page-break-after:auto;break-after:auto}
+  return `@page{size:${W} ${H};margin:0}html,body{margin:0;background:#fff;font:12px "Pretendard","Noto Sans KR",sans-serif;color:#555}${opt.gray?'img{filter:grayscale(1)}':''}
+  .pg{width:${W};height:${H};padding:${m};box-sizing:border-box;display:flex;flex-direction:column;page-break-after:always;break-after:page;overflow:hidden}.pg:last-child{page-break-after:auto;break-after:auto}
   .hd{display:flex;justify-content:space-between;padding:0 0 3mm;font-size:10px;color:#888}.im{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}.im img{max-width:100%;max-height:100%;object-fit:contain}`}
-function pagesHTML(ps){const ttl=esc(One.main().title||'Achernar'),d=new Date().toLocaleDateString('ko-KR');return ps.map((p,i)=>`<div class="pg">${opt.head&&!p.slide?`<div class="hd"><span>${ttl} · ${esc(p.t)}</span><span>${d} · ${i+1}/${ps.length}</span></div>`:''}<div class="im"><img src="${p.u}"></div></div>`).join('')}
-function frame(body,style,title){const f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0';document.body.appendChild(f);const d=f.contentDocument;d.open();d.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>${style}</style></head><body>${body}</body></html>`);d.close();
+function pagesHTML(ps){const ttl=esc(One.main().title||'Achernar'),d=new Date().toLocaleDateString('ko-KR');return ps.map((p,i)=>`<div class="pg">${opt.head&&!p.slide?`<div class="hd"><span>${ttl} · ${esc(p.t)}</span><span>${i+1}/${ps.length}</span></div>`:''}<div class="im"><img src="${p.u}"></div></div>`).join('')}
+function frame(body,style,title){({body,css:style}=DocPPT.noHF(body,style));const f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0';document.body.appendChild(f);const d=f.contentDocument;d.open();d.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>${style}</style></head><body>${body}</body></html>`);d.close();
   const imgs=[...d.images];Promise.all(imgs.map(im=>im.complete?0:new Promise(r=>{im.onload=im.onerror=r}))).then(()=>setTimeout(()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(e){toast('인쇄 창을 열 수 없어요 · ‘인쇄용 파일’로 받아서 열어 보세요')}setTimeout(()=>f.remove(),60000)},200))}
-function fileOf(body,style,title){const html=`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>${style}</style></head><body>${body}<script>addEventListener('load',()=>setTimeout(()=>print(),300))<\/script></body></html>`;saveFile(title+' (인쇄용).html',new Blob([html],{type:'text/html'}))}
+function fileOf(body,style,title){({body,css:style}=DocPPT.noHF(body,style));const html=`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>${style}</style></head><body>${body}<script>addEventListener('load',()=>setTimeout(()=>print(),300))<\/script></body></html>`;saveFile(title+' (인쇄용).html',new Blob([html],{type:'text/html'}))}
 async function build(){if(opt.what==='doc'){const C=ap().C();const sel=Canvas.sel().find(i=>i.type==='doc');const it=sel||C.items.find(i=>i.type==='doc');const[,W,H]=PAPER[opt.paper.replace('l','p')]||PAPER.a4p;
     return{body:it.text||'',style:DocPPT.DOCCSS+`@page{size:${W} ${H};margin:${opt.margin==='0'?'0':opt.margin==='s'?'10mm':'18mm'}}body{margin:0 auto;max-width:none}${opt.gray?'*{color:#000!important}':''}`,title:DocPPT.titleOf(it)}}
   const ps=await pages();if(!ps.length)return null;return{body:pagesHTML(ps),style:css(),title:(One.main().title||'Achernar')+(opt.what==='slides'?' 슬라이드':''),n:ps.length,ps}}
@@ -36,7 +36,7 @@ async function open(what){One.home();await new Promise(r=>setTimeout(r,120));con
      <h6>무엇을</h6><div class="prg">${radio('what',ch,opt.what)}</div>
      <h6>종이</h6><div class="prg two">${radio('paper',Object.entries(PAPER).map(([k,v])=>[k,v[0]]),opt.paper)}</div>
      <h6>여백</h6><div class="prg three">${radio('margin',[['0','없음'],['s','좁게'],['n','보통']],opt.margin)}</div>
-     <label class="prx"><input type="checkbox" id="prHead" ${opt.head?'checked':''}> 위에 제목·날짜·쪽수 넣기</label><label class="prx"><input type="checkbox" id="prGray" ${opt.gray?'checked':''}> 흑백으로 (잉크 아끼기)</label></div>
+     <label class="prx"><input type="checkbox" id="prHead" ${opt.head?'checked':''}> 위에 제목·쪽수 넣기</label><label class="prx"><input type="checkbox" id="prGray" ${opt.gray?'checked':''}> 흑백으로 (잉크 아끼기)</label></div>
     <div class="prr"><div class="prv" id="prv"><div class="prload">미리보기 만드는 중…</div></div><div class="prinfo" id="prinfo"></div>
      <div class="prbtn"><button class="btn ghost" id="prFile">${ic('dl')}인쇄용 파일 받기</button><button class="btn pr" id="prGo">${ic('page')}인쇄하기</button></div><p class="note">인쇄 창에서 ‘PDF로 저장’을 고르면 PDF 파일이 돼요.</p></div></div>`,
    onOpen:()=>{const body=$('#mbody');let tk=0;

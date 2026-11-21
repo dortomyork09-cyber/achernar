@@ -1561,3 +1561,13 @@ body:has(#vp[data-bg=board]) #toast,body:has(#vp[data-bg=night]) #toast{box-shad
 #cmq .qg p{grid-column:1/-1;margin:10px 0;text-align:center;color:#A1A1AA;font-size:12px}
 #cmq .qf{display:flex;align-items:center;justify-content:space-between;margin-top:6px;font-size:11px;color:#A1A1AA}
 #cmq .qf button{font-size:11px;color:#52525B;text-decoration:underline;text-underline-offset:2px}
+/* 도형 고르기 · 도형 다듬기 */
+#ctx .shg{display:grid;grid-template-columns:repeat(12,32px);gap:2px}
+#ctx .shg .shk{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:7px;color:#3F3F46;padding:0}
+#ctx .shg .shk:hover{background:#F4F4F5}#ctx .shg .shk.on{background:#18181B;color:#fff}
+#ctx .shf{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin-top:6px;padding-top:6px;border-top:1px solid #F1F1F3}
+#ctx:has(.shg){flex-direction:column;align-items:stretch;flex-wrap:nowrap}
+.shp path.shx{fill:none!important}
+.t-shape[data-sh=chevron] .ed{left:32%;right:22%}
+.t-shape[data-sh=moon] .ed{left:8%;right:40%;top:58%}
+.t-shape[data-sh=cyl] .ed{top:60%}

@@ -47,7 +47,7 @@ function dice(its){if(its.length<2||its.length>5)return toast('카드를 2~5개 
 /* ---------- 타임캡슐 ---------- */
 async function capsule(its){const d=await ask('타임캡슐 — 언제 열릴까요?',{sub:'그날까지 흐리게 잠겨서 고칠 수 없어요. 예: '+dateAdd(today(),365),val:dateAdd(today(),365),ph:'YYYY-MM-DD'});if(!d)return;if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||d<=today())return toast('오늘 이후 날짜를 YYYY-MM-DD로 적어 주세요');
   const ap=A();ap.push();its.forEach(i=>{i.capsule=d;i.capSeen=false;i.capMade=today()});ap.setSel([]);ap.render();ap.save();toast(`${d}에 열리는 타임캡슐을 묻었어요 🔒`)}
-function capsuleCheck(){const p=curPage();if(p?.type!=='canvas')return;const op=p.cv.items.filter(i=>i.capsule&&i.capsule<=today()&&!i.capSeen);if(!op.length)return;toast(`🎁 타임캡슐 ${op.length}개가 열렸어요!`);setTimeout(()=>{op.forEach(i=>i.capSeen=true);save()},2500)}
+function capsuleCheck(){return;const p=curPage();if(p?.type!=='canvas')return;const op=p.cv.items.filter(i=>i.capsule&&i.capsule<=today()&&!i.capSeen);if(!op.length)return;toast(`🎁 타임캡슐 ${op.length}개가 열렸어요!`);setTimeout(()=>{op.forEach(i=>i.capSeen=true);save()},2500)}
 
 /* ---------- 색상 연구실 ---------- */
 async function extract(it){const u=burl(it.blob);if(!u)return toast('이미지를 찾을 수 없어요');const img=new Image();img.src=u;try{await img.decode()}catch(e){return toast('이미지를 읽지 못했어요')}
