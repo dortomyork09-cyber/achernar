@@ -26,6 +26,23 @@ function push(s=snapStr()){(U[pg.id]??=[]).push(s);if(U[pg.id].length>80)U[pg.id
 function restore(s){Object.assign(C(),JSON.parse(s));selS=new Set();selL=null;render();save()}
 function undo(){const u=U[pg.id];if(!u?.length)return toast('되돌릴 게 없어요');(R[pg.id]??=[]).push(snapStr());restore(u.pop())}
 function redo(){const r=R[pg.id];if(!r?.length)return;(U[pg.id]??=[]).push(snapStr());restore(r.pop())}
+/* 캔바처럼 맞춰지는 안내선: 다른 카드의 가장자리·가운데에 붙기 (Alt 누르면 끔) */
+function guideSnap(M,dx,dy){if(!M.gd){const ids=new Set(M.mv.map(g=>g.o.id));const sz=M.mv.filter(g=>g.el).map(g=>({x:g.x,y:g.y,w:g.el.offsetWidth,h:g.el.offsetHeight}));if(!sz.length)return null;
+  const bx={x:Math.min(...sz.map(r=>r.x)),y:Math.min(...sz.map(r=>r.y))};bx.w=Math.max(...sz.map(r=>r.x+r.w))-bx.x;bx.h=Math.max(...sz.map(r=>r.y+r.h))-bx.y;
+  const T=[];(C().items||[]).forEach(it=>{if(ids.has(it.id))return;const el=E(it.id);if(!el||!el.isConnected||el.offsetParent===null)return;T.push({x:it.x,y:it.y,w:el.offsetWidth,h:el.offsetHeight})});M.gd={bx,T}}
+  const{bx,T}=M.gd;if(!T.length){clearGuides();return null}const th=7/z;
+  const gx=[0,bx.w/2,bx.w].map(o=>bx.x+dx+o),gy=[0,bx.h/2,bx.h].map(o=>bx.y+dy+o);
+  let bX=null,bY=null;T.forEach(t=>{const tx=[t.x,t.x+t.w/2,t.x+t.w],ty=[t.y,t.y+t.h/2,t.y+t.h];
+    gx.forEach(a=>tx.forEach(b=>{const d=b-a;if(Math.abs(d)<th&&(!bX||Math.abs(d)<Math.abs(bX)))bX=d}));
+    gy.forEach(a=>ty.forEach(b=>{const d=b-a;if(Math.abs(d)<th&&(!bY||Math.abs(d)<Math.abs(bY)))bY=d}))});
+  const ox=bX!=null?dx+bX:dx,oy=bY!=null?dy+bY:dy;const X0=bx.x+ox,Y0=bx.y+oy,lines=[];
+  const fx=[X0,X0+bx.w/2,X0+bx.w],fy=[Y0,Y0+bx.h/2,Y0+bx.h];
+  if(bX!=null)fx.forEach(a=>{const hit=T.filter(t=>[t.x,t.x+t.w/2,t.x+t.w].some(b=>Math.abs(b-a)<.6));if(hit.length){const ys=[Y0,Y0+bx.h,...hit.flatMap(t=>[t.y,t.y+t.h])];lines.push({v:1,p:a,a:Math.min(...ys),b:Math.max(...ys)})}});
+  if(bY!=null)fy.forEach(a=>{const hit=T.filter(t=>[t.y,t.y+t.h/2,t.y+t.h].some(b=>Math.abs(b-a)<.6));if(hit.length){const xs=[X0,X0+bx.w,...hit.flatMap(t=>[t.x,t.x+t.w])];lines.push({v:0,p:a,a:Math.min(...xs),b:Math.max(...xs)})}});
+  drawGuides(lines);return{x:bX!=null?ox:null,y:bY!=null?oy:null}}
+function drawGuides(L){let g=world&&world.querySelector('.sguide');if(!g){if(!world)return;g=document.createElement('div');g.className='sguide';world.appendChild(g)}
+  const w=Math.max(1,1/z);g.innerHTML=L.map(l=>l.v?`<i style="left:${l.p-w/2}px;top:${l.a}px;width:${w}px;height:${l.b-l.a}px"></i>`:`<i style="top:${l.p-w/2}px;left:${l.a}px;height:${w}px;width:${l.b-l.a}px"></i>`).join('')}
+function clearGuides(){world?.querySelectorAll('.sguide').forEach(g=>g.remove())}
 function view(){world.style.transform=`translate(${px}px,${py}px) scale(${z})`;const g=24*z*(z<.5?4:1);vp.style.backgroundSize=`${g}px ${g}px`;vp.style.backgroundPosition=`${px}px ${py}px`;vp.style.setProperty('--gs',g+'px');$('#zl',root).textContent=Math.round(z*100)+'%';C().view={x:px,y:py,z};mm();if(typeof World!=='undefined')World.onView?.()}
 const reduce=()=>!S.settings.anim||matchMedia('(prefers-reduced-motion: reduce)').matches;
 function anim(nx,ny,nz){if(reduce()){px=nx;py=ny;z=nz;view();return save()}const a={x:px,y:py,z},t0=performance.now();const st=t=>{if(!pg)return;const k=Math.min(1,(t-t0)/240),e=1-(1-k)**3;px=a.x+(nx-a.x)*e;py=a.y+(ny-a.y)*e;z=a.z+(nz-a.z)*e;view();if(k<1)requestAnimationFrame(st);else save()};requestAnimationFrame(st)}
@@ -324,7 +341,7 @@ function mount(p,el){pg=p;root=el;SEEN=null;SEENL=null;selS=new Set();selL=null;
     if(M.m==='pinch'){if(P2.size<2)return;const[a,b]=[...P2.values()],r=vp.getBoundingClientRect(),d=Math.hypot(a[0]-b[0],a[1]-b[1]);const cc=[(a[0]+b[0])/2-r.left,(a[1]+b[1])/2-r.top],c0=[M.c[0]-r.left,M.c[1]-r.top],nz=cl(M.z0*d/M.d,.1,4);px=cc[0]-(c0[0]-M.px0)*nz/M.z0;py=cc[1]-(c0[1]-M.py0)*nz/M.z0;z=nz;view();return}
     const dx=e.clientX-M.sx,dy=e.clientY-M.sy;if(!M.moved&&Math.abs(dx)+Math.abs(dy)>6){M.moved=true;clearTimeout(M.lp)}if(M.moved&&/pan|drag|box|rz|link/.test(M.m))getSelection()?.removeAllRanges();
     if(M.m==='pan'){if(M.moved)vp.classList.add('panning');px=M.px0+dx;py=M.py0+dy;view()}
-    else if(M.m==='drag'){if(!M.moved)return;M.mv.forEach(g=>{g.o.x=snapV(g.x+dx/z);g.o.y=snapV(g.y+dy/z);if(g.el){g.el.style.left=g.o.x+'px';g.el.style.top=g.o.y+'px'}});if(M.sk?.length){M.sk.forEach(g=>g.k.p=g.p.map(([x,y])=>[r1(x+dx/z),r1(y+dy/z)]));drawInk()}drawLinks();mm()}
+    else if(M.m==='drag'){if(!M.moved)return;const ad=e.altKey?null:guideSnap(M,dx/z,dy/z);M.mv.forEach(g=>{g.o.x=ad&&ad.x!=null?Math.round(g.x+ad.x):snapV(g.x+dx/z);g.o.y=ad&&ad.y!=null?Math.round(g.y+ad.y):snapV(g.y+dy/z);if(g.el){g.el.style.left=g.o.x+'px';g.el.style.top=g.o.y+'px'}});if(M.sk?.length){M.sk.forEach(g=>g.k.p=g.p.map(([x,y])=>[r1(x+dx/z),r1(y+dy/z)]));drawInk()}drawLinks();mm()}
     else if(M.m==='shp'){const r=vp.getBoundingClientRect(),bx=$('#box',root);let w=Math.abs(dx),h=Math.abs(dy);if(e.shiftKey)w=h=Math.max(w,h);bx.hidden=false;Object.assign(bx.style,{left:(dx<0?M.sx-w:M.sx)-r.left+'px',top:(dy<0?M.sy-h:M.sy)-r.top+'px',width:w+'px',height:h+'px'})}
     else if(M.m==='arw'){const[wx,wy]=toWorld(e.clientX,e.clientY);const[x0,y0]=M.s.p[0];let nx=wx,ny=wy;if(e.shiftKey){const ang=Math.round(Math.atan2(wy-y0,wx-x0)/(Math.PI/4))*(Math.PI/4),d=Math.hypot(wx-x0,wy-y0);nx=x0+Math.cos(ang)*d;ny=y0+Math.sin(ang)*d}M.s.p[1]=[r1(nx),r1(ny)];drawInk();const t=cardAt(e.clientX,e.clientY);$$('.card.lktarget',root).forEach(c=>c.classList.remove('lktarget'));if(M.from&&t&&t!==M.from)E(t)?.classList.add('lktarget')}
     else if(M.m==='line'){const[wx,wy]=toWorld(e.clientX,e.clientY);let[x0,y0]=M.s.p[0];let nx=wx,ny=wy;if(e.shiftKey){const ang=Math.round(Math.atan2(wy-y0,wx-x0)/(Math.PI/4))*(Math.PI/4),d=Math.hypot(wx-x0,wy-y0);nx=x0+Math.cos(ang)*d;ny=y0+Math.sin(ang)*d}M.s.p[1]=[r1(nx),r1(ny)];M.el.setAttribute('d',pathD(M.s.p))}
@@ -334,7 +351,7 @@ function mount(p,el){pg=p;root=el;SEEN=null;SEENL=null;selS=new Set();selL=null;
     else if(M.m==='pen'){const[wx,wy]=toWorld(e.clientX,e.clientY),l=M.s.p.at(-1);if(Math.hypot(wx-l[0],wy-l[1])*z<2)return;M.s.p.push([r1(wx),r1(wy)]);M.el.setAttribute('d',pathD(M.s.p))}
     else if(M.m==='erase'){const[wx,wy]=toWorld(e.clientX,e.clientY);eraseAt(wx,wy)}
     else if(M.m==='box'){const r=vp.getBoundingClientRect(),bx=$('#box',root);bx.hidden=false;Object.assign(bx.style,{left:Math.min(e.clientX,M.sx)-r.left+'px',top:Math.min(e.clientY,M.sy)-r.top+'px',width:Math.abs(dx)+'px',height:Math.abs(dy)+'px'});const[ax,ay]=toWorld(Math.min(e.clientX,M.sx),Math.min(e.clientY,M.sy)),[bx2,by2]=toWorld(Math.max(e.clientX,M.sx),Math.max(e.clientY,M.sy));if(M.baseK){selK=new Set([...M.baseK,...C().strokes.filter(k=>k.p.every(q=>q[0]>=ax&&q[0]<=bx2&&q[1]>=ay&&q[1]<=by2)).map(k=>k.id)])}setSel([...M.base,...C().items.filter(i=>{const q=box(i.id);return q&&q.x<bx2&&q.x+q.w>ax&&q.y<by2&&q.y+q.h>ay}).map(i=>i.id)],null,!!M.baseK);if(M.baseK)drawInk()}},sig);
-  const up=e=>{P2.delete(e.pointerId);if(!M)return;const m=M;clearTimeout(m.lp);if(m.m==='pinch'){if(P2.size===0){M=null;save()}return}M=null;vp.classList.remove('panning');const bx=$('#box',root);if(bx)bx.hidden=true;if(m.m==='box'&&!m.moved&&m.toggle){const s2=new Set(m.base);s2.has(m.toggle)?s2.delete(m.toggle):s2.add(m.toggle);setSel([...s2]);return}if(m.m==='box'&&m.baseK){ctx();if(selS.size+selK.size>1)toast(`${selS.size+selK.size}개 골랐어요 · 끌어서 옮기세요`,{ms:1400});return}
+  const up=e=>{P2.delete(e.pointerId);if(!M)return;const m=M;if(m.m==='drag')clearGuides();clearTimeout(m.lp);if(m.m==='pinch'){if(P2.size===0){M=null;save()}return}M=null;vp.classList.remove('panning');const bx=$('#box',root);if(bx)bx.hidden=true;if(m.m==='box'&&!m.moved&&m.toggle){const s2=new Set(m.base);s2.has(m.toggle)?s2.delete(m.toggle):s2.add(m.toggle);setSel([...s2]);return}if(m.m==='box'&&m.baseK){ctx();if(selS.size+selK.size>1)toast(`${selS.size+selK.size}개 골랐어요 · 끌어서 옮기세요`,{ms:1400});return}
     if(m.m==='drag'){if(m.moved){push(m.pre);save()}else if(m.ed){m.ed.focus();caret(m.ed,e.clientX,e.clientY,m.inside)}}
     else if(m.m==='erase'){if(!m.hit)U[pg.id].pop();save()}
     else if(m.m==='pen'){if(autoShape){const fixed=correct(m.s.p);if(fixed){m.s.p=fixed;drawInk();toast('반듯하게 다듬었어요',{ms:1200})}}save()}

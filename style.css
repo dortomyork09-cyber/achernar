@@ -1676,3 +1676,4 @@ body:has(#vp[data-bg=board]) #toast,body:has(#vp[data-bg=night]) #toast{box-shad
   #fmtb::-webkit-scrollbar{display:none}#fmtb>*{flex:none}
   #fmtb .fdrag,#fmtb [data-f=drag]{display:none}
 }
+.sguide{position:absolute;left:0;top:0;pointer-events:none;z-index:9999}.sguide i{position:absolute;background:#F0449B;border-radius:1px}
