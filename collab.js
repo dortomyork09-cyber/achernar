@@ -29,10 +29,10 @@ async function create(){const n=await needName();if(!n)return;
   try{await connect()}catch(e){console.warn(e);return toast('서버에 연결하지 못했어요. 인터넷을 확인해 주세요')}
   const m=One.main(),c=A().C(),r=rid(),keys={e:rid(16),c:rid(16)};
   try{await db.ref().update({['keys/'+r]:keys,['rooms/'+r+'/meta']:{owner:uid,title:m.title||'내 캔버스',at:Date.now()}});
-    const s=snapshot(c),up={};COLS.forEach(k=>Object.entries(s[k]).forEach(([id,v])=>up[k+'/'+id]=v));up['members/'+uid]={n,c:colorOf(uid),r:'owner',at:Date.now()};
+    const s=snapshot(c),up={};COLS.forEach(k=>Object.entries(s[k]).forEach(([id,v])=>up[k+'/'+id]=v));up['members/'+uid]={n,c:colorOf(uid),r:'owner',at:Date.now(),...gInfo()};
     await db.ref('rooms/'+r).update(up);
   }catch(e){console.warn(e);return toast('공유를 시작하지 못했어요: '+(e.code||e.message))}
-  m.room={id:r,role:'owner',keys};touch(m);flush();await start(m);toast('공유를 시작했어요 · 링크를 복사해 보내세요');return true}
+  m.room={id:r,role:'owner',keys};touch(m);flush();remember(r,m.title,'owner',keys);await start(m);toast('공유를 시작했어요 · 링크를 복사해 보내세요');return true}
 function linkOf(kind){if(!room)return '';const base=location.origin+location.pathname;if(kind==='v')return `${base}#r=${room.id}`;if(!room.keys)return '';return `${base}#r=${room.id}&${kind}=${room.keys[kind]}`}
 
 async function join(r,kind,key){const n=await needName();if(!n)return;
@@ -41,14 +41,14 @@ async function join(r,kind,key){const n=await needName();if(!n)return;
   if(!meta)return toast('공유가 끝났거나 없는 링크예요',{ms:4000});
   let role=meta.owner===uid?'owner':'v';
   if(key&&role!=='owner'){try{await db.ref('access/'+r+'/'+uid).set(key);role=kind}catch(e){toast('링크의 권한 열쇠가 맞지 않아 보기 전용으로 열어요',{ms:4000})}}
-  try{await db.ref('rooms/'+r+'/members/'+uid).set({n,c:colorOf(uid),r:role,at:Date.now()})}catch(e){}
+  try{await db.ref('rooms/'+r+'/members/'+uid).set({n,c:colorOf(uid),r:role,at:Date.now(),...gInfo()})}catch(e){}
   const all=(await db.ref('rooms/'+r).once('value')).val()||{};
   const m=One.main();
   if(!(m.room&&m.room.id===r)){One.home();await new Promise(z=>setTimeout(z,60));const cv=A().C();if(cv&&cv.items&&cv.items.length)await One.snap(m.title||'내 캔버스')}
   const cv={items:[],links:[],strokes:[],comments:[],view:null,grid:true};
   COLS.forEach(k=>{const o=all[k]||{};cv[k]=Object.values(o).map(v=>{try{return JSON.parse(v)}catch(e){return null}}).filter(Boolean)});
   cv.items.sort((a,b)=>(a.z||0)-(b.z||0));
-  m.cv=cv;m.title=meta.title||'공유 캔버스';m.room={id:r,role,keys:m.room&&m.room.id===r?m.room.keys:null};touch(m);flush();if(window.render)render();
+  const kk=key?{[kind]:key}:null;m.cv=cv;m.title=meta.title||'공유 캔버스';m.room={id:r,role,keys:m.room&&m.room.id===r&&m.room.keys?m.room.keys:(role==='owner'?(await myRoom(r))?.keys||null:null),k:kk};remember(r,m.title,role,role==='owner'?m.room.keys:kk);touch(m);flush();if(window.render)render();
   setTimeout(()=>{try{A().fit()}catch(e){}},200);await start(m);
   toast(`‘${m.title}’에 들어왔어요 · ${ROLE[role]}`,{ms:2600})}
 
@@ -60,9 +60,9 @@ async function start(m){stop(true);room=m.room;await connect();
   roomRef.child('members').on('value',s=>{members=s.val()||{};ui()});
   pres=roomRef.child('presence/'+uid);pres.onDisconnect().remove();pres.set({n:myName(),c:colorOf(uid),t:Date.now()});
   roomRef.child('presence').on('value',s=>{const v=s.val()||{};delete v[uid];peers=v;drawCursors();ui()});
-  clearInterval(tick);tick=setInterval(loop,180);
+  Chat.bindRoom(roomRef);clearInterval(tick);tick=setInterval(loop,180);
   document.body.classList.toggle('ach-ro',!canEdit());document.body.classList.add('ach-room');roObs();ui();Cm.refresh()}
-function stop(quiet){clearInterval(tick);tick=0;if(roomRef){COLS.forEach(k=>roomRef.child(k).off());['meta','members','presence'].forEach(k=>roomRef.child(k).off())}
+function stop(quiet){clearInterval(tick);tick=0;Chat.unbindRoom();if(roomRef){COLS.forEach(k=>roomRef.child(k).off());['meta','members','presence','chat'].forEach(k=>roomRef.child(k).off())}
   if(pres){try{pres.remove()}catch(e){}}pres=null;roomRef=null;room=null;peers={};members={};boundCv=null;drawCursors();document.body.classList.remove('ach-ro','ach-room');ui();if(!quiet)Cm.refresh()}
 function ended(){const m=One.main();m.room=null;touch(m);stop();toast('공유가 끝났어요 · 지금 내용은 내 캔버스로 남아 있어요',{ms:4000})}
 function leave(){const m=One.main();m.room=null;touch(m);flush();stop();toast('공유 캔버스에서 나왔어요 · 내용은 이 기기에 남아 있어요')}
@@ -115,16 +115,21 @@ function ui(){const box=document.querySelector('#achpeers');if(!box)return;
 /* ---------- 공유 창 ---------- */
 async function open(){
   if(!room){const ok=await confirmDlg('이 캔버스를 공유할까요?','링크를 받은 사람과 같이 보고 쓸 수 있어요. 사진·영상 파일은 아직 공유되지 않고, 내 기기에서만 보여요.','공유 링크 만들기');if(!ok)return;const r=await create();if(!r)return}
-  const row=(k,t,d)=>`<div class="shr"><div><b>${t}</b><small>${d}</small></div><input class="inp" readonly value="${esc(linkOf(k))}"><button class="btn" data-cp="${k}">복사</button></div>`;
+  const row=(k,t,d)=>`<div class="shr"><div><b>${t}</b><small>${d}</small></div><input class="inp" readonly value="${esc(linkOf(k))}"><button class="btn" data-cp="${k}">복사</button><button class="btn gcr" data-gc="${k}" title="구글 클래스룸에 올리기">${CRI}</button></div>`;
   const ppl=Object.entries(members).map(([u,p])=>`<li><span class="av" style="--ac:${p.c||colorOf(u)}">${esc((p.n||'?').slice(0,1))}</span>${esc(p.n||'손님')}${u===uid?' (나)':''}<em>${ROLE[p.r]||''}</em>${peers[u]||u===uid?'<i class="onl" title="접속 중"></i>':''}</li>`).join('');
   const owner=room.role==='owner';
   modal({title:'공유',cls:'mid',html:`${owner?`${row('v','보기만','내용을 볼 수만 있어요')}${row('c','댓글 가능','보면서 댓글을 달 수 있어요')}${row('e','편집 가능','같이 고치고 만들 수 있어요')}`:`<p class="note" style="margin:0 0 12px">나는 <b>${ROLE[room.role]}</b>(으)로 들어와 있어요.</p>${row('v','보기 링크','다른 사람에게 보여 줄 때')}`}
     <h4 class="shh">같이 있는 사람</h4><ul class="shp">${ppl||'<li class="note">아직 아무도 없어요</li>'}</ul>
     <div class="shf"><span class="note">이름: <b>${esc(myName())}</b> <button class="lnk" data-nm>바꾸기</button></span>${owner?'<button class="btn dang" data-end>공유 끝내기</button>':'<button class="btn" data-leave>나가기</button>'}</div>`,
    onOpen:()=>{const b=document.querySelector('#mbody');b.querySelectorAll('[data-cp]').forEach(x=>x.onclick=()=>{const v=linkOf(x.dataset.cp);(navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(()=>toast('링크를 복사했어요'),()=>{x.previousElementSibling.select();document.execCommand('copy');toast('링크를 복사했어요')})});
-     b.querySelector('[data-end]')?.addEventListener('click',endShare);b.querySelector('[data-leave]')?.addEventListener('click',()=>{closeModal();leave()});
+     b.querySelectorAll('[data-gc]').forEach(x=>x.onclick=()=>classroom(linkOf(x.dataset.gc)));b.querySelector('[data-end]')?.addEventListener('click',endShare);b.querySelector('[data-leave]')?.addEventListener('click',()=>{closeModal();leave()});
      b.querySelector('[data-nm]')?.addEventListener('click',async()=>{const n=(await ask('이름 바꾸기',{val:myName(),ok:'바꾸기'})||'').trim().slice(0,20);if(!n)return;setName(n);if(room){roomRef.child('members/'+uid+'/n').set(n).catch(()=>{});pres&&pres.update({n})}ui();toast('이름을 바꿨어요')})}})}
 
+const CRI='<svg viewBox="0 0 24 24" width="16" height="16"><rect x="2.5" y="4" width="19" height="15" rx="2" fill="#0F9D58"/><rect x="5" y="6.5" width="14" height="10" rx="1" fill="#57BB8A"/><circle cx="12" cy="10.2" r="1.7" fill="#fff"/><path d="M8.6 15c.5-1.8 1.8-2.7 3.4-2.7s2.9.9 3.4 2.7z" fill="#fff"/><rect x="13" y="17.2" width="5" height="1.4" rx=".7" fill="#fff"/></svg>';
+function classroom(url){if(!url)return toast('먼저 공유 링크를 만들어 주세요');const w=open('https://classroom.google.com/share?url='+encodeURIComponent(url),'_blank','width=640,height=720,noopener');if(!w)toast('팝업이 막혔어요 · 주소창 오른쪽에서 팝업을 허용해 주세요',{ms:3500})}
+async function toClassroom(){if(!room){const ok=await confirmDlg('클래스룸에 올릴까요?','캔버스를 공유 링크로 만든 뒤 클래스룸 과제·자료·공지로 올려요. 기본으로 ‘댓글 가능’ 링크를 올려요.','공유하고 올리기');if(!ok)return;const r=await create();if(!r)return}
+  if(room.role!=='owner')return classroom(linkOf('v'));classroom(linkOf('c'))}
+function moreMenu(){return[{t:'공유 · 같이 쓰기',i:'user',fn:open},{t:'클래스룸에 올리기',i:'page',fn:toClassroom},...(isG()?[{t:'내 공유 캔버스',i:'page',fn:myRooms}]:[{t:'구글로 로그인',i:'user',fn:signIn}])]}
 /* ---------- 댓글 ---------- */
 const Cm=(()=>{let panel=null,tab='open',focusCard=null;
   const C=()=>A().C();const list=()=>{const c=C();if(!c)return[];if(!c.comments)c.comments=[];return c.comments};
@@ -174,6 +179,83 @@ const Cm=(()=>{let panel=null,tab='open',focusCard=null;
     const hit=[c,...(c.rep||[])].slice(-1)[0];if(!hit||hit.u===uid||Date.now()-hit.at>60000)return;if(hit.t.includes('@'+me))toast(`${hit.n}님이 댓글에서 회원님을 불렀어요`,{ms:4000,act:'보기',fn:()=>open()})}
   return {open,close,toggle,refresh,pins,notify}})();
 
+
+/* ---------- 로그인 (구글) ---------- */
+const isG=()=>{const u=fb&&fb.auth().currentUser;return !!(u&&!u.isAnonymous)};
+function gInfo(){const u=fb&&fb.auth().currentUser;return u&&!u.isAnonymous?{g:true,p:u.photoURL||''}:{}}
+function remember(r,title,role,keys){if(!db||!uid)return;db.ref('users/'+uid+'/rooms/'+r).set({t:title||'',r:role,at:Date.now(),...(keys?{k:keys}:{})}).catch(()=>{})}
+async function myRoom(r){try{return (await db.ref('users/'+uid+'/rooms/'+r).once('value')).val()}catch(e){return null}}
+async function signIn(){try{await connect()}catch(e){return toast('서버에 연결하지 못했어요')}
+  const au=fb.auth(),prov=new fb.auth.GoogleAuthProvider();prov.setCustomParameters({prompt:'select_account'});const before=uid;
+  try{if(au.currentUser&&au.currentUser.isAnonymous)await au.currentUser.linkWithPopup(prov);else await au.signInWithPopup(prov)}
+  catch(e){if(e.code==='auth/credential-already-in-use'&&e.credential){try{await au.signInWithCredential(e.credential)}catch(e2){console.warn(e2);return toast('로그인하지 못했어요')}}
+    else if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request')return;
+    else if(e.code==='auth/popup-blocked')return toast('팝업이 막혔어요 · 주소창 오른쪽에서 팝업을 허용해 주세요',{ms:3500});
+    else if(e.code==='auth/unauthorized-domain'||e.code==='auth/operation-not-allowed')return toast('구글 로그인이 아직 켜지지 않았어요 (Firebase 설정 필요)',{ms:4000});
+    else{console.warn(e);return toast('로그인하지 못했어요: '+(e.code||e.message),{ms:3500})}}
+  const u=au.currentUser;uid=u.uid;try{localStorage.setItem('ach-g','1')}catch(e){}
+  if(!myName()||myName()==='손님')setName((u.displayName||'').slice(0,20)||myName());
+  db.ref('profiles/'+uid).set({n:myName(),p:u.photoURL||'',at:Date.now()}).catch(()=>{});
+  const m=One.main();if(before&&before!==uid&&m.room){const r=m.room;stop(true);if(r.role==='owner'){m.room=null;touch(m);toast('다른 계정으로 바뀌어 원래 공유와 연결이 끊겼어요',{ms:4000})}else{await join(r.id,r.k?Object.keys(r.k)[0]:'v',r.k?Object.values(r.k)[0]:null)}}
+  else if(room){roomRef.child('members/'+uid).update({n:myName(),...gInfo()}).catch(()=>{});pres&&pres.update({n:myName()})}
+  Chat.bindUser();acct();toast(`${myName()}님, 로그인했어요`)}
+async function signOut(){const ok=await confirmDlg('로그아웃할까요?','이 기기에서 구글 계정 연결이 끊겨요. 캔버스 내용은 그대로 남아요.','로그아웃');if(!ok)return;
+  const m=One.main();if(m.room){m.room=null;touch(m)}stop(true);Chat.unbindUser();try{await fb.auth().signOut();localStorage.removeItem('ach-g')}catch(e){}uid=null;acct();toast('로그아웃했어요')}
+async function myRooms(){try{await connect()}catch(e){return toast('서버에 연결하지 못했어요')}
+  let v={};try{v=(await db.ref('users/'+uid+'/rooms').once('value')).val()||{}}catch(e){}
+  const list=Object.entries(v).sort((a,b)=>(b[1].at||0)-(a[1].at||0));
+  modal({title:'내 공유 캔버스',cls:'mid',html:list.length?`<ul class="myr">${list.map(([r,x])=>`<li><button data-r="${r}"><b>${esc(x.t||'캔버스')}</b><small>${ROLE[x.r]||''} · ${new Date(x.at||0).toLocaleDateString()}</small></button></li>`).join('')}</ul>`:'<p class="note">아직 공유하거나 들어간 캔버스가 없어요</p>',
+    onOpen:()=>document.querySelectorAll('#mbody [data-r]').forEach(b=>b.onclick=()=>{closeModal();const x=v[b.dataset.r];const k=x.k&&x.r!=='owner'?Object.entries(x.k)[0]:null;join(b.dataset.r,k?k[0]:'v',k?k[1]:null)})})}
+function acct(){const b=document.querySelector('#achacct');if(!b)return;const u=fb&&fb.auth().currentUser;
+  if(u&&!u.isAnonymous){b.innerHTML=u.photoURL?`<img src="${esc(u.photoURL)}" alt="" referrerpolicy="no-referrer">`:`<span class="av" style="--ac:${colorOf(uid)}">${esc(myName().slice(0,1))}</span>`;b.title=`${u.displayName||''} ${u.email||''}`;b.classList.add('on')}
+  else{b.innerHTML='<span>로그인</span>';b.title='구글 계정으로 로그인';b.classList.remove('on')}
+  Chat.fab()}
+function acctMenu(e){if(!isG())return signIn();const r=e.currentTarget.getBoundingClientRect(),u=fb.auth().currentUser;
+  menu(r.left,r.bottom+6,[{t:`${u.displayName||myName()} · ${u.email||''}`,i:'user',fn:()=>{}},{t:'내 공유 캔버스',i:'page',fn:myRooms},{t:'1:1 대화',i:'note',fn:()=>Chat.open('dm')},'-',{t:'로그아웃',i:'back',fn:signOut}])}
+
+/* ---------- 채팅 (캔버스 채팅 · 1:1 대화) ---------- */
+const Chat=(()=>{let el=null,fabEl=null,tab='room',thread=null,roomMsgs=[],roomRefC=null,unread=0,inbox={},dmRef=null,dmMsgs=[],inboxRef=null,booted=Date.now();
+  const mid=()=>Date.now().toString(36)+rid(5);
+  const time=t=>new Date(t).toLocaleTimeString('ko-KR',{hour:'numeric',minute:'2-digit'});
+  const pairOf=o=>[uid,o].sort().join('_');
+  function ensure(){if(el)return;el=document.createElement('aside');el.id='chatp';el.hidden=true;document.body.appendChild(el);el.addEventListener('pointerdown',e=>e.stopPropagation());el.addEventListener('keydown',e=>e.stopPropagation())}
+  function fab(){if(!fabEl){fabEl=document.createElement('button');fabEl.id='chatfab';fabEl.title='채팅';fabEl.innerHTML=`<svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 5h16v11H9l-5 4v-4H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><em hidden></em>`;fabEl.onclick=()=>el&&!el.hidden?close():open();document.body.appendChild(fabEl)}
+    fabEl.hidden=!(room||isG());const n=unread+Object.values(inbox).reduce((a,x)=>a+(x.u||0),0);const em=fabEl.querySelector('em');em.textContent=n>99?'99+':n;em.hidden=!n;if(fabEl.hidden)close()}
+  function bindRoom(ref){unbindRoom();roomRefC=ref.child('chat');roomMsgs=[];unread=0;roomRefC.limitToLast(200).on('child_added',s=>{let m;try{m=JSON.parse(s.val())}catch(e){return}roomMsgs.push(m);
+      if(m.u!==uid&&(!el||el.hidden||tab!=='room')&&m.at>booted){unread++;toast(`${m.n}: ${m.t.slice(0,40)}`,{ms:2600,act:'보기',fn:()=>open('room')})}if(!el?.hidden&&tab==='room')render(true);fab()});fab()}
+  function unbindRoom(){if(roomRefC)roomRefC.off();roomRefC=null;roomMsgs=[];unread=0;if(tab==='room'&&el&&!el.hidden)render();fab()}
+  function bindUser(){unbindUser();if(!isG())return;inboxRef=db.ref('users/'+uid+'/inbox');inboxRef.on('value',s=>{const v=s.val()||{};Object.entries(v).forEach(([p,x])=>{const old=inbox[p];if(x.u>(old?.u||0)&&x.at>booted&&!(el&&!el.hidden&&thread===p))toast(`${x.n}: ${(x.last||'').slice(0,40)}`,{ms:2600,act:'보기',fn:()=>{open('dm');openThread(p)}})});inbox=v;if(el&&!el.hidden&&tab==='dm'&&!thread)render();fab()})}
+  function unbindUser(){if(inboxRef)inboxRef.off();inboxRef=null;inbox={};closeThread();fab()}
+  function people(){const s={};Object.entries(members).forEach(([u,p])=>{if(u!==uid&&p.g)s[u]=p.n});Object.values(inbox).forEach(x=>{if(x.w)s[x.w]=x.n});return s}
+  function render(keepBottom){if(!el||el.hidden)return;const can=canComment();
+    const tabs=`<nav>${room?`<button data-t="room" class="${tab==='room'?'on':''}">이 캔버스</button>`:''}<button data-t="dm" class="${tab==='dm'?'on':''}">1:1 대화</button></nav>`;
+    let body='';
+    if(tab==='room'){body=`<div class="cmsgs">${roomMsgs.length?roomMsgs.map(msg).join(''):'<p class="note cempty">같이 있는 사람과 이야기해 보세요</p>'}</div>${can?`<form class="cin"><input class="inp" maxlength="1000" placeholder="메시지 보내기" autocomplete="off"><button class="btn pr">보내기</button></form>`:'<p class="note cro">보기 전용 링크라 메시지를 보낼 수 없어요</p>'}`}
+    else if(!isG())body=`<div class="dmlog"><p>1:1 대화는 구글 로그인 후에 쓸 수 있어요</p><button class="btn pr" data-login>구글로 로그인</button></div>`;
+    else if(thread){const x=inbox[thread]||{};body=`<div class="dmh"><button class="lnk" data-back>← 목록</button><b>${esc(x.n||'대화')}</b></div><div class="cmsgs">${dmMsgs.length?dmMsgs.map(msg).join(''):'<p class="note cempty">첫 메시지를 보내 보세요</p>'}</div><form class="cin"><input class="inp" maxlength="1000" placeholder="메시지 보내기" autocomplete="off"><button class="btn pr">보내기</button></form>`}
+    else{const conv=Object.entries(inbox).sort((a,b)=>(b[1].at||0)-(a[1].at||0)),ppl=Object.entries(people()).filter(([u])=>!conv.some(([p])=>p===pairOf(u)));
+      body=`<div class="dml">${conv.map(([p,x])=>`<button data-p="${p}"><span class="av" style="--ac:${colorOf(x.w)}">${esc((x.n||'?').slice(0,1))}</span><span><b>${esc(x.n||'')}</b><small>${esc((x.last||'').slice(0,40))}</small></span>${x.u?`<em>${x.u}</em>`:''}</button>`).join('')}
+        ${ppl.length?`<h6>같은 캔버스에 있는 사람</h6>${ppl.map(([u,n])=>`<button data-u="${u}" data-n="${esc(n)}"><span class="av" style="--ac:${colorOf(u)}">${esc(n.slice(0,1))}</span><span><b>${esc(n)}</b><small>대화 시작하기</small></span></button>`).join('')}`:''}
+        ${!conv.length&&!ppl.length?'<p class="note cempty">공유 캔버스에 구글 로그인한 사람이 있으면 여기서 대화를 시작할 수 있어요</p>':''}</div>`}
+    el.innerHTML=`<header>${tabs}<button class="x" data-close aria-label="닫기">✕</button></header>${body}`;
+    el.querySelector('[data-close]').onclick=close;el.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tab=b.dataset.t;if(tab==='room')unread=0;render(true);fab()});
+    el.querySelector('[data-login]')?.addEventListener('click',signIn);el.querySelector('[data-back]')?.addEventListener('click',()=>{closeThread();render()});
+    el.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>openThread(b.dataset.p));el.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>startDM(b.dataset.u,b.dataset.n));
+    const f=el.querySelector('.cin');if(f){const i=f.querySelector('input');f.onsubmit=e=>{e.preventDefault();const t=i.value.trim();if(!t)return;i.value='';send(t)};setTimeout(()=>i.focus(),20)}
+    const box=el.querySelector('.cmsgs');if(box)box.scrollTop=box.scrollHeight}
+  function msg(m){const me=m.u===uid;return `<div class="cm${me?' me':''}">${me?'':`<span class="av" style="--ac:${m.c||colorOf(m.u)}">${esc((m.n||'?').slice(0,1))}</span>`}<div>${me?'':`<b>${esc(m.n||'')}</b>`}<p>${esc(m.t)}</p><time>${time(m.at)}</time></div></div>`}
+  async function send(t){const n=myName()||await needName();if(!n)return;const m={u:uid,n,c:colorOf(uid),t:t.slice(0,1000),at:Date.now()};
+    if(tab==='room'){if(!roomRefC)return;roomRefC.child(mid()).set(JSON.stringify(m)).catch(e=>{console.warn(e);toast('메시지를 보내지 못했어요')});return}
+    if(!thread)return;const x=inbox[thread]||{},other=x.w;db.ref('dms/'+thread+'/'+mid()).set(JSON.stringify(m)).catch(e=>{console.warn(e);toast('메시지를 보내지 못했어요')});
+    const up={};up['users/'+uid+'/inbox/'+thread]={w:other,n:x.n||'',last:t,at:m.at,u:0};up['users/'+other+'/inbox/'+thread+'/w']=uid;up['users/'+other+'/inbox/'+thread+'/n']=n;up['users/'+other+'/inbox/'+thread+'/last']=t;up['users/'+other+'/inbox/'+thread+'/at']=m.at;
+    up['users/'+other+'/inbox/'+thread+'/u']=fb.database.ServerValue.increment(1);db.ref().update(up).catch(e=>console.warn(e))}
+  function startDM(u,n){const p=pairOf(u);if(!inbox[p])inbox[p]={w:u,n,last:'',at:Date.now(),u:0};openThread(p)}
+  function openThread(p){closeThread();thread=p;dmMsgs=[];tab='dm';dmRef=db.ref('dms/'+p);dmRef.limitToLast(200).on('child_added',s=>{try{dmMsgs.push(JSON.parse(s.val()))}catch(e){}render(true)});
+    if(inbox[p]&&inbox[p].u){db.ref('users/'+uid+'/inbox/'+p+'/u').set(0).catch(()=>{})}ensure();el.hidden=false;render()}
+  function closeThread(){if(dmRef)dmRef.off();dmRef=null;thread=null;dmMsgs=[]}
+  function open(t){ensure();if(t)tab=t;else tab=room?'room':'dm';if(tab==='room'&&!room)tab='dm';if(tab==='room')unread=0;el.hidden=false;document.body.classList.add('chatopen');render(true);fab()}
+  function close(){if(!el)return;el.hidden=true;document.body.classList.remove('chatopen');closeThread()}
+  return {bindRoom,unbindRoom,bindUser,unbindUser,open,close,fab}})();
 /* ---------- 메뉴 · 시작 ---------- */
 function cardMenu(its){if(!its||!its.length)return[];return[{t:'댓글 달기',i:'note',fn:()=>Cm.open(its[0].id)}]}
 function mountUI(){const bar=document.querySelector('#obar');if(!bar||document.querySelector('#achshare'))return;
@@ -181,15 +263,17 @@ function mountUI(){const bar=document.querySelector('#obar');if(!bar||document.q
   const peersEl=document.createElement('div');peersEl.id='achpeers';peersEl.hidden=true;
   const cm=document.createElement('button');cm.id='achcm';cm.className='onew';cm.title='댓글';cm.innerHTML=`<svg viewBox="0 0 20 20" width="16" height="16"><path d="M3.5 4.5h13v8.5h-8l-4 3v-3h-1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span>댓글</span><em hidden></em>`;cm.onclick=()=>Cm.toggle();
   const sh=document.createElement('button');sh.id='achshare';sh.className='onew achsh';sh.title='공유 · 같이 쓰기';sh.innerHTML=`<svg viewBox="0 0 20 20" width="16" height="16"><circle cx="7" cy="7" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2 16c.6-2.8 2.6-4.2 5-4.2s4.4 1.4 5 4.2M13 6.5a2.6 2.6 0 1 1 0 5.2M15 12.4c1.6.5 2.6 1.7 3 3.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>공유</span>`;sh.onclick=open;
-  anchor.parentElement.insertBefore(peersEl,anchor);anchor.parentElement.insertBefore(cm,anchor);anchor.parentElement.insertBefore(sh,anchor);
+  const ac=document.createElement('button');ac.id='achacct';ac.className='onew achac';ac.onclick=acctMenu;
+  anchor.parentElement.insertBefore(peersEl,anchor);anchor.parentElement.insertBefore(cm,anchor);anchor.parentElement.insertBefore(sh,anchor);anchor.parentElement.insertBefore(ac,anchor);acct();
   document.addEventListener('pointermove',e=>{const vp=A().vpEl();if(vp&&vp.contains(e.target))onMove(e)},{passive:true})}
 async function boot(){let tries=0;while((!document.querySelector('#obar')||typeof Canvas==='undefined'||!A()?.vpEl?.()||!A().C())&&tries++<100)await new Promise(r=>setTimeout(r,100));
   mountUI();setInterval(()=>{mountUI();if(!room)Cm.pins()},2000);setInterval(()=>{const L=A()?.worldEl?.()?.querySelector('#cpins');if(L)L.style.setProperty('--z',A().cam().z)},250);
+  let wasG=false;try{wasG=localStorage.getItem('ach-g')==='1'}catch(e){}if(wasG){try{await connect();if(isG()){Chat.bindUser();try{db.ref('profiles/'+uid).update({n:myName(),at:Date.now()})}catch(e){}}acct()}catch(e){console.warn(e)}}
   const h=new URLSearchParams(location.hash.slice(1)),r=h.get('r');
   if(r){const kind=h.get('e')?'e':h.get('c')?'c':'v';await join(r,kind,h.get(kind)||null);return}
   const m=One.main();if(m&&m.room&&m.room.id){try{await start(m)}catch(e){console.warn(e);toast('공유 캔버스에 다시 연결하지 못했어요',{ms:3000})}}
   Cm.refresh()}
 addEventListener('hashchange',()=>{const h=new URLSearchParams(location.hash.slice(1));if(h.get('r')&&(!room||room.id!==h.get('r')))boot()});
 if(document.readyState==='loading')addEventListener('DOMContentLoaded',()=>setTimeout(boot,300));else setTimeout(boot,300);
-return {open,join,leave,cardMenu,comments:Cm,state:()=>({room,uid,peers,members}),_last:()=>last};
+return {open,join,leave,cardMenu,moreMenu,signIn,signOut,myRooms,chat:Chat,classroom:toClassroom,comments:Cm,state:()=>({room,uid,peers,members}),_last:()=>last};
 })();

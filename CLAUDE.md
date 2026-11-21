@@ -27,3 +27,4 @@
 - Canvas는 const라 window.Canvas가 없다 → 존재 확인은 typeof Canvas로.
 - 캔버스 화면(vp)은 다시 만들어질 수 있다 → 이벤트는 document에 걸고 대상이 지금 vp 안인지 확인.
 - 공유를 끝낼 때 원격 삭제 이벤트가 먼저 와서 내 카드까지 지웠다 → 원격 삭제는 잠깐 모았다가 방이 살아 있을 때만 적용.
+- 빈 속성 패널(흰 띠)이 카드를 누를 때마다 켜졌다 꺼졌다: classList.toggle(이름, undefined)는 '뒤집기'로 동작한다 → 둘째 인자는 반드시 true/false(!!).
