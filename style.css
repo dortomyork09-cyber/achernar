@@ -1468,8 +1468,8 @@ body.showby .card[data-by]::before{content:attr(data-by);position:absolute;top:-
 #vp[data-bg=kraft]{background-color:#E4D3B4!important;background-image:radial-gradient(rgb(120 90 50/.12) 1px,transparent 1.2px)!important;background-size:7px 7px!important}
 #vp[data-bg=board]{background-color:#2F4A3A!important;background-image:radial-gradient(rgb(255 255 255/.06) 1px,transparent 1.2px)!important;background-size:var(--gs) var(--gs)!important}
 #vp[data-bg=night]{background-color:#141C33!important;background-image:radial-gradient(rgb(255 255 255/.10) 1px,transparent 1.2px)!important;background-size:var(--gs) var(--gs)!important}
-#vp[data-bg=board] .t-text .ed,#vp[data-bg=night] .t-text .ed,#vp[data-bg=board] .t-frame>.ed,#vp[data-bg=night] .t-frame>.ed{color:#F4F1E8}
-#vp[data-bg=board] #lk path,#vp[data-bg=night] #lk path{stroke:#E8E4D8}
+#vp[data-bg=board] .t-text.plain .ed,#vp[data-bg=night] .t-text.plain .ed,#vp[data-bg=board] .t-frame>.ed,#vp[data-bg=night] .t-frame>.ed{color:#F4F1E8}
+#vp[data-bg=board] #lk .ln,#vp[data-bg=night] #lk .ln{stroke:#E8E4D8}
 /* 문자표 */
 #cmap{position:fixed;right:20px;bottom:96px;z-index:900;width:372px;max-width:calc(100vw - 24px);background:#fff;border:1px solid #E4E4E7;border-radius:14px;box-shadow:0 18px 50px -12px rgb(0 0 0/.25);display:flex;flex-direction:column;font-size:13px;color:#18181B}
 #cmap .cmh{display:flex;align-items:center;gap:8px;padding:10px 10px 8px 14px;cursor:move}
@@ -1485,3 +1485,70 @@ body.showby .card[data-by]::before{content:attr(data-by);position:absolute;top:-
 #cmap .cme{grid-column:1/-1;color:#A1A1AA;text-align:center;padding:18px 0;margin:0}
 #cmap .cmf{margin:0;padding:6px 14px 10px;font-size:11px;color:#A1A1AA}
 .achlang{font-weight:700;min-width:40px;justify-content:center}
+/* 더 보기 판 */
+#dmore{position:absolute;left:50%;bottom:84px;z-index:60;width:min(560px,calc(100% - 24px));max-height:min(460px,calc(100% - 120px));display:flex;flex-direction:column;background:#fff;border:1px solid #E4E4E7;border-radius:12px;box-shadow:0 12px 32px -14px rgb(0 0 0/.28);transform:translate(-50%,8px);opacity:0;transition:opacity .16s ease,transform .16s ease}
+#dmore.in{opacity:1;transform:translate(-50%,0)}#dmore.out{opacity:0;transform:translate(-50%,6px)}
+#dmore .dmh{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #F1F1F3}
+#dmore .dmq{width:180px;height:30px;border:1px solid #E4E4E7;border-radius:8px;padding:0 10px;font:inherit;font-size:13px;outline:none}#dmore .dmq:focus{border-color:#A1A1AA}
+#dmore .dmn{font-size:12px;color:#A1A1AA;margin-left:auto}
+#dmore .dmb{overflow:auto;padding:4px 12px 12px}
+#dmore h6{margin:10px 2px 6px;font-size:11px;font-weight:600;color:#71717A;letter-spacing:.02em}
+#dmore .dmg{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:4px}
+#dmore .dt{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px 8px;border-radius:8px;color:#27272A;font-size:12px;line-height:1.25;text-align:center}
+#dmore .dt:hover{background:#F4F4F5}#dmore .dt.dis{opacity:.4}
+#dmore .dti svg{width:20px;height:20px}
+#dmore .dtt{max-width:100%;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+#dmore .pin{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;opacity:0;color:#A1A1AA}
+#dmore .pin svg{width:14px;height:14px}
+#dmore .dt:hover .pin{opacity:1}#dmore .pin:hover{background:#E4E4E7;color:#18181B}
+#dmore .pin.on{opacity:1;color:#18181B}#dmore .pin.on svg{fill:currentColor}
+#dmore .dme{color:#A1A1AA;text-align:center;padding:24px 0;margin:0}
+#dock .more.open{background:#F4F4F5;color:#18181B}
+/* ===== AI 티 빼기 ===== */
+:root{--grad:var(--ink)}
+.grad{background:var(--ink)!important;box-shadow:none!important}
+#cvhint{gap:12px;top:46%}
+#cvhint .h1{font-size:14px;color:var(--mute);pointer-events:auto}
+#cvhint .h1 .lnk{font:inherit;color:var(--ink);text-decoration:underline;text-underline-offset:3px;text-decoration-color:#C4C4CC;padding:0;background:none;border:0;cursor:pointer}
+#cvhint .h1 .lnk:hover{text-decoration-color:var(--ink)}
+#cvhint .htips{margin:0;gap:16px;font-size:12px;opacity:.85}
+#cvhint kbd{font-weight:500;box-shadow:0 1px 0 var(--line)}
+#vp[data-bg=board] #cvhint .h1,#vp[data-bg=night] #cvhint .h1,#vp[data-bg=board] #cvhint .htips,#vp[data-bg=night] #cvhint .htips{color:rgb(255 255 255/.62)}
+#vp[data-bg=board] #cvhint .h1 .lnk,#vp[data-bg=night] #cvhint .h1 .lnk{color:#fff;text-decoration-color:rgb(255 255 255/.4)}
+.tplc .tpli{display:none}
+.tplc{padding:14px 16px;gap:4px;box-shadow:none}
+.tplc:hover{transform:none;border-color:#A1A1AA;background:#FAFAFA}
+#menu,#ctx,#pop{box-shadow:0 8px 24px -12px rgb(0 0 0/.22),0 0 0 1px rgb(0 0 0/.02)}
+/* ===== 애니메이션 ===== */
+@keyframes cIn{from{opacity:0;scale:.92}60%{opacity:1;scale:1.015}to{scale:1}}
+@keyframes cOut{to{opacity:0;scale:.9}}
+.card.cin{animation:cIn .28s cubic-bezier(.2,.8,.3,1.2)}
+.card.cout{animation:cOut .18s ease forwards;pointer-events:none}
+@keyframes lDraw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes fIn{from{opacity:0}}
+#lk .ldraw .ln{stroke-dasharray:1;stroke-dashoffset:1;animation:lDraw .4s ease-out forwards}
+#lk .ldraw>path:not(.ln):not(.hit),#lk .ldraw text{animation:fIn .2s .3s both}
+@keyframes mIn{from{opacity:0;transform:translateY(-4px) scale(.98)}}
+@keyframes mOut{to{opacity:0;transform:translateY(-3px) scale(.98)}}
+#menu:not([hidden]):not(.mnghost){animation:mIn .14s ease-out;transform-origin:top left}
+#menu.mnghost{animation:mOut .12s ease-in forwards}
+@keyframes bdIn{from{background:rgb(12 14 22/0);backdrop-filter:blur(0)}}
+@keyframes bxIn{from{opacity:0;transform:translateY(8px) scale(.985)}}
+@keyframes bdOut{to{opacity:0}}
+#modal:not([hidden]):not(.mghost){animation:bdIn .18s ease-out}
+#modal:not([hidden]):not(.mghost) .mbox{animation:bxIn .2s cubic-bezier(.2,.8,.3,1)}
+#modal.mghost{animation:bdOut .15s ease-in forwards}
+#toast:not([hidden]){animation:bxIn .18s ease-out}
+#ctx:not([hidden]){animation:fIn .12s ease-out}
+#cmap{animation:bxIn .16s ease-out}
+@keyframes hUp{from{opacity:0;transform:translateY(6px)}}
+#cvhint>*{animation:hUp .45s ease-out both}#cvhint>*:nth-child(2){animation-delay:.12s}
+.bgfx{position:absolute;inset:0;pointer-events:none;transition:opacity .4s ease;z-index:0}.bgfx.go{opacity:0}
+#vp{transition:background-color .4s ease}
+#dock button{transition:background-color .12s,color .12s,transform .12s}#dock button:active{transform:scale(.94)}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+body:has(#vp[data-bg=board]) #obar .msname,body:has(#vp[data-bg=night]) #obar .msname,body:has(#vp[data-bg=board]) #obar .ost,body:has(#vp[data-bg=night]) #obar .ost{color:rgb(255 255 255/.75)}
+body:has(#vp[data-bg=board]) #obar .msmark,body:has(#vp[data-bg=night]) #obar .msmark{filter:invert(1)}
+body:has(#vp[data-bg=board]) #obar .achac,body:has(#vp[data-bg=night]) #obar .achac{box-shadow:0 0 0 1px rgb(255 255 255/.35)}
+body:has(#vp[data-bg=board]) #toast,body:has(#vp[data-bg=night]) #toast{box-shadow:0 0 0 1px rgb(255 255 255/.18)}
