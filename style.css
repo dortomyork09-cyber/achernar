@@ -1552,3 +1552,12 @@ body:has(#vp[data-bg=board]) #obar .msname,body:has(#vp[data-bg=night]) #obar .m
 body:has(#vp[data-bg=board]) #obar .msmark,body:has(#vp[data-bg=night]) #obar .msmark{filter:invert(1)}
 body:has(#vp[data-bg=board]) #obar .achac,body:has(#vp[data-bg=night]) #obar .achac{box-shadow:0 0 0 1px rgb(255 255 255/.35)}
 body:has(#vp[data-bg=board]) #toast,body:has(#vp[data-bg=night]) #toast{box-shadow:0 0 0 1px rgb(255 255 255/.18)}
+/* 문자표: \ 로 부르는 작은 창 */
+#cmq{position:fixed;z-index:950;width:300px;background:#fff;border:1px solid #E4E4E7;border-radius:10px;box-shadow:0 10px 28px -12px rgb(0 0 0/.28);padding:8px;animation:mIn .12s ease-out}
+#cmq input{width:100%;box-sizing:border-box;height:30px;border:1px solid #E4E4E7;border-radius:7px;padding:0 9px;font:inherit;font-size:13px;outline:none}#cmq input:focus{border-color:#A1A1AA}
+#cmq .qg{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;margin-top:6px;max-height:150px;overflow:auto}
+#cmq .qg button{aspect-ratio:1;border-radius:6px;font-size:17px;line-height:1;display:flex;align-items:center;justify-content:center}
+#cmq .qg button:hover{background:#F4F4F5}#cmq .qg button.on{background:#18181B;color:#fff}
+#cmq .qg p{grid-column:1/-1;margin:10px 0;text-align:center;color:#A1A1AA;font-size:12px}
+#cmq .qf{display:flex;align-items:center;justify-content:space-between;margin-top:6px;font-size:11px;color:#A1A1AA}
+#cmq .qf button{font-size:11px;color:#52525B;text-decoration:underline;text-underline-offset:2px}
