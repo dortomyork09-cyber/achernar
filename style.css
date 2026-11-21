@@ -1326,3 +1326,6 @@ ul.dchk>li.done::before{background-color:#141C33;border-color:#141C33}
 .tplc{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:16px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;transition:border-color .15s,transform .15s}
 .tplc:hover{border-color:var(--sel);transform:translateY(-1px)}.tplc b{font-size:15px;color:var(--ink)}.tplc span:last-child{font-size:12.5px;color:var(--mute);line-height:1.5}
 .tpli{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:#141C33;color:#F4EFE3}.tpli svg{width:17px;height:17px}
+/* 줄·문단 간격 (서식 막대 → 간격) */
+.card[style*="--clh"] .ed,.card[style*="--clh"] .ed :is(p,li,div,h1,h2,h3,blockquote,td,th),#docf .dfe[style*="--clh"],#docf .dfe[style*="--clh"] :is(p,li,div,h1,h2,h3,blockquote,td,th){line-height:var(--clh)!important}
+.card[style*="--cpg"] .ed :is(p,div,h1,h2,h3,blockquote,ul,ol,table),#docf .dfe[style*="--cpg"] :is(p,div,h1,h2,h3,blockquote,ul,ol,table){margin-top:0!important;margin-bottom:var(--cpg)!important}
