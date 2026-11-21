@@ -129,7 +129,7 @@ async function open(){
   const ppl=Object.entries(members).map(([u,p])=>`<li><span class="av" style="--ac:${p.c||colorOf(u)}">${esc((p.n||'?').slice(0,1))}</span>${esc(p.n||'손님')}${u===uid?' (나)':''}<em>${ROLE[p.r]||''}</em>${peers[u]||u===uid?'<i class="onl" title="접속 중"></i>':''}</li>`).join('');
   const owner=room.role==='owner';
   modal({title:'공유',cls:'mid',html:`${owner?`${row('v','보기만','내용을 볼 수만 있어요')}${row('c','댓글 가능','보면서 댓글을 달 수 있어요')}${row('e','편집 가능','같이 고치고 만들 수 있어요')}`:`<p class="note" style="margin:0 0 12px">나는 <b>${ROLE[room.role]}</b>(으)로 들어와 있어요.</p>${row('v','보기 링크','다른 사람에게 보여 줄 때')}`}
-    <h4 class="shh">같이 있는 사람</h4><ul class="shp">${ppl||'<li class="note">아직 아무도 없어요</li>'}</ul>
+    <h4 class="shh">같이 있는 사람</h4><ul class="shpl">${ppl||'<li class="note">아직 아무도 없어요</li>'}</ul>
     <div class="shf"><span class="note">이름: <b>${esc(myName())}</b> <button class="lnk" data-nm>바꾸기</button></span>${owner?'<button class="btn dang" data-end>공유 끝내기</button>':'<button class="btn" data-leave>나가기</button>'}</div>`,
    onOpen:()=>{const b=document.querySelector('#mbody');b.querySelectorAll('[data-cp]').forEach(x=>x.onclick=()=>{const v=linkOf(x.dataset.cp);(navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(()=>toast('링크를 복사했어요'),()=>{x.previousElementSibling.select();document.execCommand('copy');toast('링크를 복사했어요')})});
      b.querySelectorAll('[data-gc]').forEach(x=>x.onclick=()=>classroom(linkOf(x.dataset.gc)));b.querySelector('[data-end]')?.addEventListener('click',endShare);b.querySelector('[data-leave]')?.addEventListener('click',()=>{closeModal();leave()});
