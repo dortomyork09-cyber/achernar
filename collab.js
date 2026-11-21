@@ -18,15 +18,17 @@ async function needName(){let n=myName();if(n)return n;n=(await ask('이름을 �
 function js(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('load '+src));document.head.appendChild(s)})}
 async function connect(){if(db)return;
   if(window.__FBMOCK){fb=window.__FBMOCK}else{if(!window.firebase){await js('vendor/firebase-app-compat.js');await js('vendor/firebase-auth-compat.js');await js('vendor/firebase-database-compat.js')}fb=window.firebase;if(!fb.apps.length)fb.initializeApp(CFG)}
-  const au=fb.auth();if(!au.currentUser)await au.signInAnonymously();uid=au.currentUser.uid;db=fb.database()}
+  const au=fb.auth();await new Promise(r=>{const un=au.onAuthStateChanged(()=>{try{un()}catch(e){}r()})});uid=au.currentUser?au.currentUser.uid:null;db=fb.database()}
+function needLogin(why){return new Promise(async res=>{try{await connect()}catch(e){toast('서버에 연결하지 못했어요. 인터넷을 확인해 주세요');return res(false)}if(isG())return res(true);let done=false;
+  modal({title:'구글로 로그인해 주세요',cls:'mid',html:`<p class="note" style="margin:0 0 14px;line-height:1.6">${why||'같이 쓰기·채팅·댓글은 구글 계정으로 로그인해야 쓸 수 있어요.'}<br>혼자 쓰는 캔버스는 로그인 없이 그대로 쓸 수 있어요.</p><button class="btn pr glog" data-g><svg viewBox="0 0 24 24" width="18" height="18"><path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.6 3.8-5.5 3.8-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.2 14.6 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12s4.4 9.8 9.8 9.8c5.7 0 9.4-4 9.4-9.6 0-.6-.1-1.1-.2-1.6H12z"/></svg>구글로 로그인</button><p class="note" style="margin:12px 0 0;font-size:12px">학교 계정이 막혀 있으면 개인 구글 계정으로 로그인해 주세요.</p>`,
+   onOpen:()=>{const b=document.querySelector('#mbody [data-g]');b.onclick=async()=>{const ok=await signIn();if(ok){done=true;closeModal();res(true)}}},onClose:()=>{if(!done)res(false)}})})}
 
 /* ---------- 직렬화 ---------- */
 function colArr(c,k){if(k==='comments'){if(!c.comments)c.comments=[];return c.comments}return c[k]||(c[k]=[])}
 function snapshot(c){const o={};COLS.forEach(k=>{const m={};colArr(c,k).forEach(x=>{if(x&&x.id)m[x.id]=JSON.stringify(x)});o[k]=m});return o}
 
 /* ---------- 방 만들기 · 들어가기 ---------- */
-async function create(){const n=await needName();if(!n)return;
-  try{await connect()}catch(e){console.warn(e);return toast('서버에 연결하지 못했어요. 인터넷을 확인해 주세요')}
+async function create(){if(!await needLogin('캔버스를 공유하려면 구글 계정으로 로그인해 주세요.'))return;const n=myName()||await needName();if(!n)return;
   const m=One.main(),c=A().C(),r=rid(),keys={e:rid(16),c:rid(16)};
   try{await db.ref().update({['keys/'+r]:keys,['rooms/'+r+'/meta']:{owner:uid,title:m.title||'내 캔버스',at:Date.now()}});
     const s=snapshot(c),up={};COLS.forEach(k=>Object.entries(s[k]).forEach(([id,v])=>up[k+'/'+id]=v));up['members/'+uid]={n,c:colorOf(uid),r:'owner',at:Date.now(),...gInfo()};
@@ -35,8 +37,7 @@ async function create(){const n=await needName();if(!n)return;
   m.room={id:r,role:'owner',keys};touch(m);flush();remember(r,m.title,'owner',keys);await start(m);toast('공유를 시작했어요 · 링크를 복사해 보내세요');return true}
 function linkOf(kind){if(!room)return '';const base=location.origin+location.pathname;if(kind==='v')return `${base}#r=${room.id}`;if(!room.keys)return '';return `${base}#r=${room.id}&${kind}=${room.keys[kind]}`}
 
-async function join(r,kind,key){const n=await needName();if(!n)return;
-  try{await connect()}catch(e){return toast('서버에 연결하지 못했어요. 인터넷을 확인해 주세요')}
+async function join(r,kind,key){if(!await needLogin('공유받은 캔버스에 들어가려면 구글 계정으로 로그인해 주세요.'))return toast('로그인하면 링크로 다시 들어올 수 있어요',{ms:3000});const n=myName()||await needName();if(!n)return;
   let meta=null;try{meta=(await db.ref('rooms/'+r+'/meta').once('value')).val()}catch(e){console.warn(e)}
   if(!meta)return toast('공유가 끝났거나 없는 링크예요',{ms:4000});
   let role=meta.owner===uid?'owner':'v';
@@ -185,20 +186,20 @@ const isG=()=>{const u=fb&&fb.auth().currentUser;return !!(u&&!u.isAnonymous)};
 function gInfo(){const u=fb&&fb.auth().currentUser;return u&&!u.isAnonymous?{g:true,p:u.photoURL||''}:{}}
 function remember(r,title,role,keys){if(!db||!uid)return;db.ref('users/'+uid+'/rooms/'+r).set({t:title||'',r:role,at:Date.now(),...(keys?{k:keys}:{})}).catch(()=>{})}
 async function myRoom(r){try{return (await db.ref('users/'+uid+'/rooms/'+r).once('value')).val()}catch(e){return null}}
-async function signIn(){try{await connect()}catch(e){return toast('서버에 연결하지 못했어요')}
+async function signIn(){try{await connect()}catch(e){toast('서버에 연결하지 못했어요');return false}
   const au=fb.auth(),prov=new fb.auth.GoogleAuthProvider();prov.setCustomParameters({prompt:'select_account'});const before=uid;
   try{if(au.currentUser&&au.currentUser.isAnonymous)await au.currentUser.linkWithPopup(prov);else await au.signInWithPopup(prov)}
-  catch(e){if(e.code==='auth/credential-already-in-use'&&e.credential){try{await au.signInWithCredential(e.credential)}catch(e2){console.warn(e2);return toast('로그인하지 못했어요')}}
-    else if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request')return;
-    else if(e.code==='auth/popup-blocked')return toast('팝업이 막혔어요 · 주소창 오른쪽에서 팝업을 허용해 주세요',{ms:3500});
-    else if(e.code==='auth/unauthorized-domain'||e.code==='auth/operation-not-allowed')return toast('구글 로그인이 아직 켜지지 않았어요 (Firebase 설정 필요)',{ms:4000});
-    else{console.warn(e);return toast('로그인하지 못했어요: '+(e.code||e.message),{ms:3500})}}
+  catch(e){if(e.code==='auth/credential-already-in-use'&&e.credential){try{await au.signInWithCredential(e.credential)}catch(e2){console.warn(e2);toast('로그인하지 못했어요');return false}}
+    else if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request')return false;
+    else if(e.code==='auth/popup-blocked'){toast('팝업이 막혔어요 · 주소창 오른쪽에서 팝업을 허용해 주세요',{ms:3500});return false}
+    else if(e.code==='auth/unauthorized-domain'||e.code==='auth/operation-not-allowed'){toast('구글 로그인이 아직 켜지지 않았어요 (Firebase 설정 필요)',{ms:4000});return false}
+    else{console.warn(e);toast('로그인하지 못했어요: '+(e.code||e.message),{ms:3500});return false}}
   const u=au.currentUser;uid=u.uid;try{localStorage.setItem('ach-g','1')}catch(e){}
-  if(!myName()||myName()==='손님')setName((u.displayName||'').slice(0,20)||myName());
+  if(!myName()||myName()==='손님')setName((u.displayName||'').slice(0,20)||myName()||'사용자');
   db.ref('profiles/'+uid).set({n:myName(),p:u.photoURL||'',at:Date.now()}).catch(()=>{});
   const m=One.main();if(before&&before!==uid&&m.room){const r=m.room;stop(true);if(r.role==='owner'){m.room=null;touch(m);toast('다른 계정으로 바뀌어 원래 공유와 연결이 끊겼어요',{ms:4000})}else{await join(r.id,r.k?Object.keys(r.k)[0]:'v',r.k?Object.values(r.k)[0]:null)}}
   else if(room){roomRef.child('members/'+uid).update({n:myName(),...gInfo()}).catch(()=>{});pres&&pres.update({n:myName()})}
-  Chat.bindUser();acct();toast(`${myName()}님, 로그인했어요`)}
+  Chat.bindUser();acct();toast(`${myName()}님, 로그인했어요`);return true}
 async function signOut(){const ok=await confirmDlg('로그아웃할까요?','이 기기에서 구글 계정 연결이 끊겨요. 캔버스 내용은 그대로 남아요.','로그아웃');if(!ok)return;
   const m=One.main();if(m.room){m.room=null;touch(m)}stop(true);Chat.unbindUser();try{await fb.auth().signOut();localStorage.removeItem('ach-g')}catch(e){}uid=null;acct();toast('로그아웃했어요')}
 async function myRooms(){try{await connect()}catch(e){return toast('서버에 연결하지 못했어요')}
@@ -271,7 +272,7 @@ async function boot(){let tries=0;while((!document.querySelector('#obar')||typeo
   let wasG=false;try{wasG=localStorage.getItem('ach-g')==='1'}catch(e){}if(wasG){try{await connect();if(isG()){Chat.bindUser();try{db.ref('profiles/'+uid).update({n:myName(),at:Date.now()})}catch(e){}}acct()}catch(e){console.warn(e)}}
   const h=new URLSearchParams(location.hash.slice(1)),r=h.get('r');
   if(r){const kind=h.get('e')?'e':h.get('c')?'c':'v';await join(r,kind,h.get(kind)||null);return}
-  const m=One.main();if(m&&m.room&&m.room.id){try{await start(m)}catch(e){console.warn(e);toast('공유 캔버스에 다시 연결하지 못했어요',{ms:3000})}}
+  const m=One.main();if(m&&m.room&&m.room.id){try{await connect()}catch(e){}if(isG()){try{await start(m)}catch(e){console.warn(e);toast('공유 캔버스에 다시 연결하지 못했어요',{ms:3000})}}else toast('공유 캔버스와 다시 연결하려면 로그인해 주세요',{ms:6000,act:'로그인',fn:async()=>{if(await signIn())start(One.main()).catch(()=>{})}})}
   Cm.refresh()}
 addEventListener('hashchange',()=>{const h=new URLSearchParams(location.hash.slice(1));if(h.get('r')&&(!room||room.id!==h.get('r')))boot()});
 if(document.readyState==='loading')addEventListener('DOMContentLoaded',()=>setTimeout(boot,300));else setTimeout(boot,300);

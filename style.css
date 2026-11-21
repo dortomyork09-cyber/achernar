@@ -1406,3 +1406,4 @@ body.chatopen #cmp{bottom:574px}
 #hwpov header{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#141C33;color:#F4EFE3}#hwpov header b{flex:1}#hwpov header span{opacity:.7;font-size:13px;margin-right:8px}
 .hwps{flex:1;overflow:auto;padding:24px;display:flex;flex-direction:column;align-items:center;gap:18px;--hz:1}
 .hwps figure{margin:0;width:calc(780px*var(--hz));max-width:none}.hwps img{width:100%;background:#fff;box-shadow:0 4px 20px rgb(0 0 0/.35);display:block}.hwps figcaption{color:#ddd;font-size:12px;text-align:center;margin-top:6px}
+body.ptrdown iframe{pointer-events:none!important}
