@@ -18,7 +18,7 @@ async function needName(){let n=myName();if(n)return n;n=(await ask('이름을 �
 function js(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('load '+src));document.head.appendChild(s)})}
 async function connect(){if(db)return;
   if(window.__FBMOCK){fb=window.__FBMOCK}else{if(!window.firebase){await js('vendor/firebase-app-compat.js');await js('vendor/firebase-auth-compat.js');await js('vendor/firebase-database-compat.js')}fb=window.firebase;if(!fb.apps.length)fb.initializeApp(CFG)}
-  const au=fb.auth();await new Promise(r=>{const un=au.onAuthStateChanged(()=>{try{un()}catch(e){}r()})});uid=au.currentUser?au.currentUser.uid:null;db=fb.database()}
+  const au=fb.auth();await new Promise(r=>{const un=au.onAuthStateChanged(()=>{try{un()}catch(e){}r()})});uid=au.currentUser?au.currentUser.uid:null;db=fb.database();try{db.ref('.info/serverTimeOffset').on('value',x=>{const v=+x.val();off=isFinite(v)?v:0})}catch(e){}}
 function needLogin(why){return new Promise(async res=>{try{await connect()}catch(e){toast('서버에 연결하지 못했어요. 인터넷을 확인해 주세요');return res(false)}if(isG())return res(true);let done=false;
   modal({title:'구글로 로그인해 주세요',cls:'mid',html:`<p class="note" style="margin:0 0 14px;line-height:1.6">${why||'같이 쓰기·채팅·댓글은 구글 계정으로 로그인해야 쓸 수 있어요.'}<br>로그인하면 캔버스가 다른 기기에서도 이어져요. 로그인 없이도 이 기기에서는 그대로 쓸 수 있어요. (만 14세 이상 · <a href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a>)</p><button class="btn pr glog" data-g><svg viewBox="0 0 24 24" width="18" height="18"><path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.6 3.8-5.5 3.8-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.2 14.6 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12s4.4 9.8 9.8 9.8c5.7 0 9.4-4 9.4-9.6 0-.6-.1-1.1-.2-1.6H12z"/></svg>구글로 로그인</button><p class="note" style="margin:12px 0 0;font-size:12px">학교 계정이 막혀 있으면 개인 구글 계정으로 로그인해 주세요.</p>`,
    onOpen:()=>{const b=document.querySelector('#mbody [data-g]');b.onclick=async()=>{const ok=await signIn();if(ok){done=true;closeModal();res(true)}}},onClose:()=>{if(!done)res(false)}})})}
@@ -109,7 +109,7 @@ function schedule(){if(pendRender)return;pendRender=requestAnimationFrame(()=>{p
 function loop(){if(!room||document.hidden)return;
   if(A().C()!==boundCv){const m=One.main();if(m.room)m.room=null;touch(m);stop();toast('다른 캔버스를 열어서 공유 캔버스에서 나왔어요',{ms:3000});return}
   let cur=snapshot(boundCv);const up={};let bad=false;
-  if(canEdit()){const b0=last.items||{};let st=false;boundCv.items.forEach(it=>{const j=cur.items[it.id];if(j===b0[it.id])return;const now=Date.now();if(!it.by&&!(it.id in b0)){it.by=uid;it.byn=myName();it.bt=now}
+  if(canEdit()){const b0=last.items||{};let st=false;boundCv.items.forEach(it=>{const j=cur.items[it.id];if(j===b0[it.id])return;const now=srvNow();if(!it.by&&!(it.id in b0)){it.by=uid;it.byn=myName();it.bt=now}
     if(it.eb!==uid||!it.et||now-it.et>30000){it.cx=it.cx||{};it.cx[uid]=(it.cx[uid]||0)+1;if(!it.cn)it.cn={};it.cn[uid]=myName()}it.eb=uid;it.ebn=myName();it.et=now;st=true});if(st)cur=snapshot(boundCv)}
   COLS.forEach(k=>{const a=cur[k],b=last[k]||{};const allowed=EDIT.includes(k)?canEdit():canComment();
     for(const id in a)if(a[id]!==b[id]){if(allowed)up[k+'/'+id]=a[id];else bad=true}
@@ -224,6 +224,7 @@ function gInfo(){const u=fb&&fb.auth().currentUser;return u&&!u.isAnonymous?{g:t
 function remember(r,title,role,keys){if(!db||!uid)return;db.ref('users/'+uid+'/rooms/'+r).set({t:title||'',r:role,at:Date.now(),...(keys?{k:keys}:{})}).catch(()=>{})}
 async function myRoom(r){try{return (await db.ref('users/'+uid+'/rooms/'+r).once('value')).val()}catch(e){return null}}
 /* ---------- 로그인 전 확인: 만 14세 이상 + 개인정보처리방침 동의 ---------- */
+let off=0;const srvNow=()=>Date.now()+off;
 const CV='2026-11-22';const CK='ach-consent';
 const agreed=()=>{try{return localStorage.getItem(CK)===CV}catch(e){return false}};
 function consent(){if(agreed())return Promise.resolve(true);return new Promise(res=>{let done=false;const fin=v=>{if(done)return;done=true;res(v)};
@@ -344,5 +345,5 @@ async function boot(){let tries=0;while((!document.querySelector('#obar')||typeo
   Cm.refresh()}
 addEventListener('hashchange',()=>{const h=new URLSearchParams(location.hash.slice(1));if(h.get('k')){const k0=h.get('k');history.replaceState(null,'',location.pathname+location.search);joinCode(k0);return}if(h.get('r')&&(!room||room.id!==h.get('r')))boot()});
 if(document.readyState==='loading')addEventListener('DOMContentLoaded',()=>setTimeout(boot,300));else setTimeout(boot,300);
-return {_recheck:()=>recheck(),setMeta:async o=>{if(!room||room.role!=='owner'||!roomRef)return false;try{await roomRef.child('meta').update(o);return true}catch(e){return false}},name:()=>myName(),askCode,joinCode,fb:()=>({db,uid:isG()?uid:null,fb}),connect,contrib,cloud:async why=>{if(!await needLogin(why))return null;return {db,uid,name:myName()}},open,join,leave,cardMenu,moreMenu,signIn,signOut,deleteAccount,myRooms,chat:Chat,classroom:toClassroom,comments:Cm,state:()=>({room,uid,peers,members}),_last:()=>last};
+return {now:srvNow,_recheck:()=>recheck(),setMeta:async o=>{if(!room||room.role!=='owner'||!roomRef)return false;try{await roomRef.child('meta').update(o);return true}catch(e){return false}},name:()=>myName(),askCode,joinCode,fb:()=>({db,uid:isG()?uid:null,fb}),connect,contrib,cloud:async why=>{if(!await needLogin(why))return null;return {db,uid,name:myName()}},open,join,leave,cardMenu,moreMenu,signIn,signOut,deleteAccount,myRooms,chat:Chat,classroom:toClassroom,comments:Cm,state:()=>({room,uid,peers,members}),_last:()=>last};
 })();

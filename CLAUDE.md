@@ -61,3 +61,9 @@
 - 이미 로그인한 사람은 acct()에서 recheck → 거절 시 조용히 로그아웃.
 - RTDB users/$uid/consent {a14:true,v,at} — 규칙 바뀜, 콘솔에 다시 붙여넣기 필요.
 - 실수 기록: 테스트 스크립트에서 Playwright Python에 .then 쓰면 안 됨.
+
+## v26 내 생각 먼저 오류 수정
+- 빈 카드(더블클릭만 하고 안 쓴 카드)도 '적음'으로 쳐서 남의 생각이 펼쳐지던 문제 → 내용 있는 카드만 인정.
+- 기기마다 시계가 달라서 생기는 문제 → Firebase .info/serverTimeOffset으로 맞춘 Collab.now() 사용 (mfAt, 카드 bt, 타이머).
+- 가려진 카드가 나타날 때 등장 애니메이션 때문에 잠깐 선명해지던 것 → .card.veil.cin 애니메이션 끔.
+- 실수 기록: 동의 창 추가 후 예전 테스트 스크립트들에 ach-consent를 안 넣어서 멈춤.
